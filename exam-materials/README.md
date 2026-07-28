@@ -45,7 +45,14 @@ Filenames matter less than two things:
 2. **Whether the scoring grid is included.** The Bewertungskriterien pages are the most
    valuable part — the official telc B1 band values (A=5/B=3/C=1/D=0, ×3 = 45) came from
    exactly those pages. Papers that include them let the rubrics be verified rather than
-   approximated; A1 and A2 are still marked `verified: false` for want of them.
+   approximated. B1 and A1 are `verified: true`; **A2 is still `verified: false`** and
+   reuses the B1 band shape as a stand-in until a real Start Deutsch 2 grid turns up.
+
+   A1's grid came from the telc *Start Deutsch 1* Übungstest, section *Informationen für
+   Prüfende → Bewertung*, and looks nothing like B1's: each Inhaltspunkt is marked 3 /
+   1,5 / 0 on its own, plus a single 1 / 0,5 / 0 mark for kommunikative Gestaltung, for a
+   maximum of 10. There is no formale-Richtigkeit criterion at A1. Don't assume a lower
+   level is just a rescaled B1 — check the paper.
 
 Record page hints in an `INDEX.md` inside the level folder if you like, or just say them in
 chat when you point me at the files — both work.

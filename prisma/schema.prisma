@@ -157,14 +157,13 @@ model Evaluation {
   id      String @id @default(cuid())
   essayId String @unique
 
-  /// Score on the institute's official scale (e.g. 0-45 for telc B1).
-  overallScore Int
+  /// Score on the institute's official scale (e.g. 0-45 for telc B1, 0-10 for A1).
+  /// Float, not Int: telc A1 awards half marks (3 / 1,5 / 0 per Inhaltspunkt).
+  overallScore Float
   /// Maximum for that scale, stored so historical rows survive rubric changes.
-  maxScore     Int
+  maxScore     Float
   /// Pre-multiplier criterion total, as it appears on the examiner mark sheet.
-  rawScore     Int
-  /// Zusatzpunkte actually granted after eligibility rules.
-  bonusPoints  Int     @default(0)
+  rawScore     Float
   /// Set when a zero-out rule fired (e.g. "Thema verfehlt").
   zeroedReason String?
 

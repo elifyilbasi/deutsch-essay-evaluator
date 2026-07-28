@@ -7,7 +7,14 @@
  * ours — the originals are all just "Schriftlicher Ausdruck".
  *
  * Every task here is B1, informal (du), four Leitpunkte, 80-100 words, 30 minutes.
- * `requiresSubject` is true where the paper asks for a Betreff.
+ *
+ * `requiresSubject` is false throughout, even though most of these papers tell the
+ * candidate to think of "eine passende Betreff". telc's own B1 criteria set the
+ * Textsorte for this task as a persönliche oder halbformelle E-Mail, for which the
+ * formal letter's features - Absender, Empfänger, Datum, Betreffzeile - are "nicht
+ * gefordert", so a missing Betreff must not cost marks under Kriterium II. The flag
+ * is decided by the Textsorte, not by the paper's advice: the one formal B1 task in
+ * seed.ts (a reply to a Sprachschule, register "SIE") does still set it true.
  */
 import type { SeedPrompt } from "./seed-types";
 
@@ -43,7 +50,7 @@ Andreas`,
       "Ob Sie Andreas besuchen möchten",
       "Was es bei Ihnen Neues gibt",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-01.png",
   },
   {
@@ -66,7 +73,7 @@ Andreas`,
       "Was Sie nach dem Urlaub gemacht haben",
       "Was es bei Ihnen Neues gibt",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-02.png",
   },
   {
@@ -111,7 +118,7 @@ Sophie`,
       "Tipps für Sophie",
       "Reaktion auf den Vorschlag",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-04.png",
   },
   {
@@ -140,7 +147,7 @@ Vera`,
       "Was Sie über Veras neue Stelle wissen wollen",
       "Vorschlag für gemeinsame Unternehmung",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-05.png",
   },
   {
@@ -165,7 +172,7 @@ Annika`,
       "Was Sie im Urlaub gerne machen",
       "Wie man beim Reisen Geld sparen kann",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-06.png",
   },
   {
@@ -189,7 +196,7 @@ Iris`,
       "Welche Musik",
       "Urlaubpläne",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-07.png",
   },
   {
@@ -242,7 +249,7 @@ Deine Tamara`,
       "Frage zur neuen Arbeitsstelle",
       "Warum Sie nicht geschrieben haben",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-09.png",
   },
   {
@@ -270,7 +277,7 @@ Thomas`,
       "Was Sie noch über den Ausflug wissen wollen",
       "Auf Sportunfall reagieren",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-10.png",
   },
   {
@@ -293,7 +300,7 @@ Jan`,
       "Ihre Pläne für den nächsten Urlaub",
       "Treffen mit Jan?",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-11.png",
   },
   {
@@ -344,7 +351,7 @@ Sonja`,
       "Jemanden mitbringen?",
       "Übernachten: Reaktion auf Sonjas Vorschlag",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-13.png",
   },
   {
@@ -370,7 +377,7 @@ Caroline`,
       "Warum Sie so lange nicht geschrieben haben",
       "Unternehmungen/Programm mit der Schülerin",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-14.png",
   },
   {
@@ -395,7 +402,7 @@ Deine Nadja`,
       "Weg zum Garten",
       "Was es bei Ihnen Neues gibt",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-15.png",
   },
   {
@@ -422,7 +429,7 @@ Nicole`,
       "Was Sie über den Bruder denken",
       "Was Sie selbst gern gemeinsam mit anderen machen",
     ],
-    requiresSubject: true,
+    requiresSubject: false,
     sourceFile: "telc-uebungstest-16.png",
   },
   {

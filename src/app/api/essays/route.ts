@@ -110,7 +110,6 @@ export async function POST(request: Request) {
             overallScore: evaluation.result.overallScore,
             maxScore: evaluation.result.maxScore,
             rawScore: evaluation.result.rawScore,
-            bonusPoints: evaluation.result.bonusPoints,
             zeroedReason: evaluation.result.zeroedReason,
             resultLabel: evaluation.result.resultLabel,
             criteriaScores: evaluation.result.criteriaScores,

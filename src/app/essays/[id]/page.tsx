@@ -7,6 +7,7 @@ import { CriteriaBreakdown } from "@/components/criteria-breakdown";
 import { AnnotatedEssay } from "@/components/annotated-essay";
 import { LeitpunktCoverageList } from "@/components/leitpunkt-coverage";
 import { formatDuration } from "@/lib/formatDuration";
+import { getRubric } from "@/lib/rubrics";
 import type { CriterionScore, Correction, LeitpunktCoverage } from "@/lib/gemini";
 
 export default async function EssayDetailPage({
@@ -28,6 +29,8 @@ export default async function EssayDetailPage({
   }
 
   const evaluation = essay.evaluation;
+  // Level-specific labelling (which exam part these points are, and how it counts).
+  const rubric = getRubric(essay.institute, essay.level);
 
   return (
     <div className="space-y-6">
@@ -98,11 +101,10 @@ export default async function EssayDetailPage({
                 </p>
               )}
               <p className="text-sm">{evaluation.summaryFeedback}</p>
-              <p className="text-xs text-muted-foreground">
-                Der Schriftliche Ausdruck zählt {evaluation.maxScore} Punkte. Bestehen wird
-                bei telc über die gesamte schriftliche Prüfung gerechnet (60 %), nicht über
-                diesen Teil allein.
-              </p>
+              {/* Per level: the parts, totals and pass rules differ between them. */}
+              {rubric && (
+                <p className="text-xs text-muted-foreground">{rubric.scaleNote}</p>
+              )}
             </CardContent>
           </Card>
 
@@ -124,10 +126,10 @@ export default async function EssayDetailPage({
             <CardContent>
               <CriteriaBreakdown
                 criteria={evaluation.criteriaScores as unknown as CriterionScore[]}
-                bonusPoints={evaluation.bonusPoints}
                 rawScore={evaluation.rawScore}
                 overallScore={evaluation.overallScore}
                 maxScore={evaluation.maxScore}
+                scaleLabel={rubric?.scaleLabel}
               />
             </CardContent>
           </Card>
