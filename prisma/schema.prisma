@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth.js (NextAuth) models ---
+// https://authjs.dev/getting-started/adapters/prisma
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+
+  accounts Account[]
+  sessions Session[]
+  essays   Essay[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Domain models ---
+
+enum Institute {
+  TELC
+  GOETHE
+}
+
+enum Level {
+  A1
+  A2
+  B1
+  B2
+  C1
+}
+
+enum EssayStatus {
+  DRAFT
+  SUBMITTED
+  EVALUATED
+}
+
+/// Whether the task expects the informal "du" or the formal "Sie" register.
+/// Graded as part of Kommunikative Gestaltung.
+enum Register {
+  DU
+  SIE
+}
+
+/// Mirrors the structure of a real TELC/Goethe "Schriftlicher Ausdruck" (Brief) task:
+/// an intro line, an incoming stimulus letter, and a set of discrete content points
+/// (Leitpunkte) the candidate must each address.
+model Prompt {
+  id        String    @id @default(cuid())
+  institute Institute
+  level     Level
+  title     String
+
+  /// e.g. "Eine Bekannte hat Ihnen folgenden Brief geschrieben:"
+  taskIntro      String   @db.Text
+  /// The incoming letter the candidate replies to. Null for non-reactive tasks.
+  stimulusText   String?  @db.Text
+  /// Name of the person who wrote the stimulus letter, so the reply can address them.
+  stimulusAuthor String?
+  /// e.g. "Antworten Sie Ihrer Bekannten. Schreiben Sie etwas zu den folgenden vier Punkten:"
+  instructions   String   @db.Text
+  /// The content points, kept as discrete items because completeness is graded per point.
+  leitpunkte     String[]
+
+  register        Register @default(DU)
+  /// Whether the task requires a subject line (Betreff).
+  requiresSubject Boolean  @default(false)
+
+  minWords Int
+  maxWords Int
+  isActive Boolean @default(true)
+
+  essays Essay[]
+
+  createdAt DateTime @default(now())
+
+  @@index([institute, level, isActive])
+}
+
+model Essay {
+  id        String      @id @default(cuid())
+  userId    String
+  promptId  String
+  institute Institute
+  level     Level
+  content   String      @db.Text
+  wordCount Int
+  status    EssayStatus @default(DRAFT)
+
+  /// Seconds spent writing, measured from the first keystroke. Null for essays
+  /// written before timing existed.
+  writingSeconds Int?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id])
+
+  evaluation Evaluation?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model Evaluation {
+  id      String @id @default(cuid())
+  essayId String @unique
+
+  /// Score on the institute's official scale (e.g. 0-45 for telc B1).
+  overallScore Int
+  /// Maximum for that scale, stored so historical rows survive rubric changes.
+  maxScore     Int
+  /// Pre-multiplier criterion total, as it appears on the examiner mark sheet.
+  rawScore     Int
+  /// Zusatzpunkte actually granted after eligibility rules.
+  bonusPoints  Int     @default(0)
+  /// Set when a zero-out rule fired (e.g. "Thema verfehlt").
+  zeroedReason String?
+
+  resultLabel       String
+  criteriaScores    Json
+  /// Per-Leitpunkt completeness: [{ leitpunkt, addressed, comment }]
+  leitpunktCoverage Json
+  corrections       Json
+  summaryFeedback   String @db.Text
+  rawModelResponse  Json
+
+  essay Essay @relation(fields: [essayId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}

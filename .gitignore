@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# Copyrighted exam papers used as format reference only - never committed or deployed.
+# Folder structure and README are kept; see exam-materials/README.md
+exam-materials/**/*.pdf
+exam-materials/**/*.png
+exam-materials/**/*.jpg
+exam-materials/**/*.jpeg
+
+# Personal writing kept alongside the reference material, not project content.
+exam-materials/your-draft-*.txt
