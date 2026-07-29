@@ -315,6 +315,30 @@ column and a migration for a rule that does not vary per task. What was real is 
 *which* three count when a candidate answers all four is our inference, not telc's —
 now labelled as such in the rubric comment.
 
+### Verdict handling (tests, round two)
+
+The first test round covered the rubric layer and the outbound prompt, but nothing
+tested what the evaluator does with what the model sends *back* — the one layer where
+a bug had actually reached a live run. `evaluateEssay` is now split: the network call
+stays, and `resultFromVerdict` derives the score and breakdown from a verdict object,
+so it can be driven directly with no API key.
+
+12 cases over malformed and surprising responses: an invented criterion key, a missing
+verdict, a band letter outside the rubric, an empty coverage list, more coverage
+entries than Leitpunkte, and entirely absent arrays. Every case asserts a
+self-consistency invariant — the breakdown must sum to the `rawScore` printed beside
+it, no line may exceed its own maximum, and no line may have a maximum of zero.
+
+That invariant found a rough edge on its first run: with an empty coverage list a
+content row was emitted with a maximum of 0, which the progress bar divides by. I had
+initially written the test *around* it, asserting only finiteness. The row is now
+omitted when nothing was judged, and the test asserts the invariant instead.
+
+Two behaviours are documented rather than changed, because both are judgement calls
+worth making deliberately: a missing criterion verdict and an unknown band letter both
+fall back to the rubric's last band, which is the 0-point one. That penalises the
+learner for our infrastructure's glitch.
+
 ### Open
 
 - **The schema change needs applying**: `npx prisma db push`. Not run; it touches the

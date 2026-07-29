@@ -73,8 +73,14 @@ export type TaskContext = {
  * with every A1 request, contradicting the prompt in the same call.
  */
 /** The level's own wording for the coverage statuses, if it states one. */
-function statusWording(rubric: LevelRubric): Record<LeitpunktStatus, string> | null {
-  return rubric.contentPointScoring?.descriptors ?? rubric.leitpunktStatusGuidance ?? null;
+function statusWording(
+  rubric: LevelRubric,
+): Record<LeitpunktStatus, string> | null {
+  return (
+    rubric.contentPointScoring?.descriptors ??
+    rubric.leitpunktStatusGuidance ??
+    null
+  );
 }
 
 export function buildResponseSchema(rubric: LevelRubric) {
@@ -395,6 +401,25 @@ export async function evaluateEssay(task: TaskContext): Promise<{
   }
 
   const verdict = JSON.parse(text) as ExaminerVerdict;
+
+  return {
+    result: resultFromVerdict(verdict, task),
+    verdict,
+    raw: { model, text },
+  };
+}
+
+/**
+ * Derives the score and the breakdown from an examiner verdict. Split out from the
+ * network call so it can be tested against malformed and surprising responses: a
+ * model may omit a criterion, return a band the rubric does not define, or send
+ * more coverage entries than the task has Leitpunkte, and none of that should
+ * produce a nonsensical mark sheet.
+ */
+export function resultFromVerdict(
+  verdict: ExaminerVerdict,
+  task: Pick<TaskContext, "rubric" | "level">,
+): EvaluationResult {
   const { rubric, level } = task;
 
   const bands = Object.fromEntries(
@@ -432,7 +457,9 @@ export async function evaluateEssay(task: TaskContext): Promise<{
   // are summed into one line that leads the breakdown, mirroring the "1-2-3-KG"
   // order of telc's own Antwortbogen. The per-point detail is the coverage list.
   const contentPoints = rubric.contentPointScoring;
-  if (contentPoints) {
+  // No coverage entries means nothing was judged, so there is no content row to
+  // show - and a row with a maximum of 0 would render as a NaN-wide progress bar.
+  if (contentPoints && coverage.length > 0) {
     const perPoint = contentPoints.points;
     const marks = contentPointMarks(
       contentPoints,
@@ -459,23 +486,19 @@ export async function evaluateEssay(task: TaskContext): Promise<{
   }
 
   return {
-    result: {
-      overallScore: breakdown.total,
-      maxScore: breakdown.maxTotal,
-      rawScore: breakdown.raw,
+    overallScore: breakdown.total,
+    maxScore: breakdown.maxTotal,
+    rawScore: breakdown.raw,
+    zeroedReason: breakdown.zeroedReason,
+    resultLabel: buildResultLabel({
+      level,
+      total: breakdown.total,
+      maxTotal: breakdown.maxTotal,
       zeroedReason: breakdown.zeroedReason,
-      resultLabel: buildResultLabel({
-        level,
-        total: breakdown.total,
-        maxTotal: breakdown.maxTotal,
-        zeroedReason: breakdown.zeroedReason,
-      }),
-      criteriaScores,
-      leitpunktCoverage: verdict.leitpunktCoverage ?? [],
-      corrections: verdict.corrections ?? [],
-      summaryFeedback: verdict.summaryFeedback ?? "",
-    },
-    verdict,
-    raw: { model, text },
+    }),
+    criteriaScores,
+    leitpunktCoverage: verdict.leitpunktCoverage ?? [],
+    corrections: verdict.corrections ?? [],
+    summaryFeedback: verdict.summaryFeedback ?? "",
   };
 }
