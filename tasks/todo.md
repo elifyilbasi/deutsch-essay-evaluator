@@ -258,6 +258,63 @@ sentences begin with "Ich". telc says to withhold A when sentences "überwiegend
 with Ich or Wir, so a human examiner might have given B. The rubric text is right; the
 judgement is generous. Worth checking across more samples before tuning on n = 1.
 
+## telc A2 (Start Deutsch 2) — branch feat/telc-a2-evaluator
+
+Source: telc Deutsch A2 (Start Deutsch 2) Übungstest 1, *Informationen für Prüfende →
+Bewertung*. The paper self-identifies in telc's exam-family listing as "telc Deutsch A2
+(Start Deutsch 2)", distinct from A2+ Beruf and A2 Schule.
+
+**The grid is word-for-word A1's**: Erfüllung der Aufgabenstellung pro Inhaltspunkt
+3 / 1,5 / 0, Kommunikative Gestaltung des Texts 1 / 0,5 / 0, "Es können maximal 10
+Punkte vergeben werden", marks recorded as 1-2-3-K. No formale-Richtigkeit criterion,
+no Zusatzpunkte, no Thema-verfehlt override. The stand-in it replaced had all three,
+plus a 15-point scale and B1's 5/3/1/0 bands.
+
+**The task is not A1's.** "Hier finden Sie vier Punkte. Wählen Sie drei aus. Schreiben
+Sie zu jedem Punkt ein bis zwei Sätze (circa 40 Wörter)." Four Leitpunkte are printed
+and three are marked, so a point the candidate deliberately skips must cost nothing —
+and the maximum stays 10, not 13. `ContentPointScoring.counted` carries this; the best
+three statuses are the ones that score. A1 leaves `counted` unset and marks every point.
+
+Both seeded A2 prompts told the candidate to write about all four points; their
+instructions and word band (35-50, circa 40) are corrected.
+
+### A display bug the end-to-end run caught
+
+Scoring was right from the start, but the criteria breakdown counted all four points:
+it rendered "9 / 12 — Erfüllung der Aufgabenstellung (4 Inhaltspunkte)" against a
+correct total of 10, because `gemini.ts` had its own copy of the summing logic. Had a
+candidate answered all four well it would have shown 12 + 1 = 13 beside a total of 10.
+The best-of-N logic now lives once, in `contentPointMarks`, used by both the scorer and
+the breakdown. The row reads 9 / 9 (3 Inhaltspunkte), and the skipped point is no
+longer described as unerfüllt — it falls outside the count.
+
+### Verified
+
+`tsc`, `eslint` and all three audits clean. Real model runs: A2 10/10 on a text that
+answers three of four points and skips "Stefan"; A1 10/10 and B1 39/45 unchanged.
+
+### Tests (finally in the repo)
+
+`npm test` — 34 tests on `node:test`, no new dependency. Three files: each level
+against its transcribed grid, level separation, and prompt consistency. The last is
+the one that matters most: rather than asserting strings someone remembered to check,
+it parses every "N × P = T" the prompt states and requires it to add up *and* to stay
+within that rubric's maximum. Three bugs this session had the same shape — the rubric
+was corrected and a layer around it was not — and that check catches the shape, not
+the instance. Mutation-tested: reintroducing the A2 prompt bug fails it with
+"4 × 3 = 12 claims more marks than the rubric's maximum of 10".
+
+### A design critique I withdrew
+
+I argued `counted: 3` sat on the wrong object, since "how many Leitpunkte" is a task
+property. Checking the paper again settled it the other way: the Antwortbogen S60 has
+exactly three Inhaltspunkt fields ("1-2-3-K") for every A2 paper, so choose-three is
+fixed by the exam format at level scale. Moving it to `Prompt` would have meant a
+column and a migration for a rule that does not vary per task. What was real is that
+*which* three count when a candidate answers all four is our inference, not telc's —
+now labelled as such in the rubric comment.
+
 ### Open
 
 - **The schema change needs applying**: `npx prisma db push`. Not run; it touches the

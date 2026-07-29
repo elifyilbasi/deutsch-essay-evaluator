@@ -96,73 +96,10 @@ const B1: LevelRubric = {
 };
 
 /**
- * The A2 grid below is NOT transcribed from official telc material — telc Start
- * Deutsch 2 uses a different writing format and scale. It reuses the B1 band shape
- * as a stand-in so the level remains usable, with a multiplier of 1 so the score is
- * reported out of 15 rather than implying the B1 45-point scale. Every German
- * descriptor in it is ours. Replace it once a real grid is available, as was done
- * for A1 (see exam-materials/README.md).
- */
-const A2: LevelRubric = {
-  level: "A2",
-  minWords: 30,
-  maxWords: 50,
-  // Not taken from an official paper - adjust alongside the A2 scoring grid.
-  timeLimitMinutes: 20,
-  scoreMultiplier: 1,
-  verified: false,
-  themaVerfehltZeroesTask: true,
-  scaleLabel: "Schreiben",
-  // Deliberately claims nothing about the real exam: this grid is a stand-in.
-  scaleNote: "Dieser Punktwert bezieht sich nur auf diese Schreibaufgabe.",
-  criteria: [
-    {
-      key: "leitpunkte",
-      label: "Berücksichtigung der Leitpunkte",
-      description:
-        "How many of the task's Leitpunkte are treated with at least a short, relevant sentence? A point merely named does not count as treated.",
-      zeroesWholeTask: true,
-      bands: bands({
-        A: "Alle vorgegebenen Leitpunkte werden angemessen bearbeitet.",
-        B: "Alle bis auf einen Leitpunkt werden angemessen bearbeitet.",
-        C: "Etwa die Hälfte der Leitpunkte wird angemessen bearbeitet.",
-        D: "Nur einer oder keiner der Leitpunkte wird angemessen bearbeitet.",
-      }),
-    },
-    {
-      key: "kommunikativeGestaltung",
-      label: "Kommunikative Gestaltung",
-      description:
-        "A logical order (greeting, reason for writing, the points, closing), simple connectors (und, aber, weil, deshalb), and a consistent register.",
-      bands: bands({
-        A: "Voll angemessen.",
-        B: "Im Großen und Ganzen angemessen.",
-        C: "Kaum noch akzeptabel.",
-        D: "Insgesamt nicht ausreichend.",
-      }),
-    },
-    {
-      key: "formaleRichtigkeit",
-      label: "Formale Richtigkeit",
-      description:
-        "Tense consistency (Perfekt/Präsens), word order in subordinate clauses, article and case agreement. Judge recurring patterns rather than every slip.",
-      zeroesWholeTask: true,
-      bands: bands({
-        A: "Keine oder nur vereinzelte Fehler.",
-        B: "Fehler, die das Verständnis nicht beeinträchtigen.",
-        C: "Fehler an zentralen Stellen, die das Verständnis erheblich beeinträchtigen.",
-        D: "So viele Fehler, dass der Text kaum noch verständlich ist.",
-      }),
-    },
-  ],
-  guidance:
-    "This is an A2 writing task (short informal letter/message). Expect simple but connected sentences. Reward clear communication of every Leitpunkt even if grammar isn't perfect.",
-};
-
-/**
- * telc Deutsch A1 (Start Deutsch 1), "Schreiben, Teil 2" — transcribed from the
- * official Übungstest 1, Informationen für Prüfende, "Bewertung" (the criteria the
- * two Prüfende enter on the green Antwortbogen S60 as the marks "1-2-3-KG"):
+ * telc Deutsch A2 (Start Deutsch 2), "Schreiben, Teil 2" — transcribed from the
+ * official Übungstest 1, Informationen für Prüfende, "Bewertung". The grid is word
+ * for word the same as telc A1's, and the marks go on the Antwortbogen S60 as
+ * "1-2-3-K":
  *
  *   Erfüllung der Aufgabenstellung (pro Inhaltspunkt)
  *     3    Aufgabe voll erfüllt und verständlich
@@ -173,28 +110,71 @@ const A2: LevelRubric = {
  *     0,5  untypische oder fehlende Wendungen, z. B. keine Anrede
  *     0    keine textsortenspezifischen Wendungen
  *
- * "Es können maximal 10 Punkte vergeben werden" — three Inhaltspunkte at 3 plus 1
- * for kommunikative Gestaltung.
+ * "Es können maximal 10 Punkte vergeben werden."
  *
- * Where those 10 points sit in the exam, from the same paper's Testformat table —
- * worth keeping here, because a bare "10 / 10" invites the assumption that it is a
- * subtest or exam total:
+ * What sets A2 apart from A1 is the task, not the grid: "Hier finden Sie vier
+ * Punkte. Wählen Sie drei aus. Schreiben Sie zu jedem Punkt ein bis zwei Sätze
+ * (circa 40 Wörter)." Four Leitpunkte are printed and three are marked — hence
+ * `counted: 3` — so the point a candidate deliberately leaves out must cost nothing.
+ * This belongs to the level rather than the task: the Antwortbogen S60 carries
+ * exactly three Inhaltspunkt fields ("1-2-3-K") for every A2 paper.
  *
- *   Schreiben, Teil 1 (Formular ausfüllen)   5   (5 items x 1 point)
- *   Schreiben, Teil 2 (this rubric)         10
- *   → Prüfungsteil Schreiben                15
- *   Hören 15 · Lesen 15 · Schreiben 15 · Sprechen 15 = 60 gesamt
- *   "Die Punktzahl wird mit 1,66 multipliziert": 60 → ~100, and the Prädikate are
- *   90-100 sehr gut, 80-89 gut, 70-79 befriedigend, 60-69 ausreichend,
- *   0-59 teilgenommen. So 60 of the scaled 100 is the pass mark.
+ * NOT transcribed, our inference: WHICH three count when a candidate answers all
+ * four anyway. The paper says the candidate chooses three and is silent on that
+ * case, so the scorer takes the best three, the reading most favourable to the
+ * candidate. Revisit if telc ever states otherwise.
  *
- * Note what the grid does NOT contain: no formale
- * Richtigkeit criterion, no banding by how many points were covered, no Zusatzpunkte
- * and no "Thema verfehlt" override. Grammar and spelling matter only where they make
- * an Inhaltspunkt "nur teilweise erfüllt" or "unverständlich", so they are fed back
- * as corrections but never scored on their own. Schreiben Teil 1 (Formular ausfüllen)
- * is a separate, deliberately out-of-scope part of the exam.
+ * Exam context, from the same paper's Testformat table: Schreiben Teil 1 (Formular)
+ * 5 + Teil 2 10 = 15 for the Prüfungsteil Schreiben; Hören, Lesen, Schreiben and
+ * Sprechen are 15 each, 60 in total. As at A1 there is no formale-Richtigkeit
+ * criterion, no Zusatzpunkte and no "Thema verfehlt" override.
  */
+const A2: LevelRubric = {
+  level: "A2",
+  minWords: 35,
+  maxWords: 50,
+  // The paper times "Lesen und Schreiben" together at 50 minutes and gives no
+  // separate figure for writing; this is our split of it, not telc's.
+  timeLimitMinutes: 20,
+  scoreMultiplier: 1,
+  verified: true,
+  themaVerfehltZeroesTask: false,
+  scaleLabel: "Schreiben, Teil 2",
+  scaleNote:
+    "Schreiben, Teil 2 zählt 10 Punkte. Mit Teil 1 (Formular ausfüllen, 5 Punkte) ergibt das den Prüfungsteil Schreiben mit 15 Punkten. Hören, Lesen, Schreiben und Sprechen zählen je 15 Punkte, zusammen 60. Diese Punktzahl wird mit 1,66 multipliziert; ab 60 Punkten gilt die Prüfung als bestanden (ausreichend).",
+  contentPointScoring: {
+    label: "Erfüllung der Aufgabenstellung",
+    description:
+      "Each Inhaltspunkt is marked on its own. Full marks require the point to be dealt with comprehensibly; half marks are for a point whose treatment falls short through weak language or thin content; no marks where the point is untreated or cannot be understood.",
+    points: { ADDRESSED: 3, PARTIAL: 1.5, MISSING: 0 },
+    descriptors: {
+      ADDRESSED: "Aufgabe voll erfüllt und verständlich",
+      PARTIAL: "Aufgabe wegen sprachlicher und inhaltlicher Mängel nur teilweise erfüllt",
+      MISSING: "Aufgabe nicht erfüllt und/oder unverständlich",
+    },
+    counted: 3,
+  },
+  criteria: [
+    {
+      key: "kommunikativeGestaltung",
+      label: "Kommunikative Gestaltung des Texts",
+      description:
+        "One mark for the text as a whole, judged only on whether it carries the phrases its Textsorte calls for — an Anrede, a Gruß am Schluss, and an opening that suits a message to this addressee. Do not judge grammar, spelling, or the ordering of the content here.",
+      bands: [
+        { band: "A", points: 1, descriptor: "der Textsorte angemessen" },
+        {
+          band: "B",
+          points: 0.5,
+          descriptor: "untypische oder fehlende Wendungen, z. B. keine Anrede",
+        },
+        { band: "C", points: 0, descriptor: "keine textsortenspezifischen Wendungen" },
+      ],
+    },
+  ],
+  guidance:
+    "This is telc Deutsch A2 (Start Deutsch 2), Schreiben Teil 2: a short message of one to two sentences per Inhaltspunkt, about 40 words. The task prints four Punkte and asks the candidate to choose three, so only three are marked — judge every Leitpunkt on its merits and never treat a deliberately unanswered fourth point as a failing. Almost the whole mark is content: each marked Inhaltspunkt is worth 3 of the 10 points. Award full marks for a point that is dealt with and understandable at A2; grammar and spelling are not in themselves a reason to withhold them. Only kommunikative Gestaltung is left over, and it is worth a single point.",
+};
+
 const A1: LevelRubric = {
   level: "A1",
   minWords: 25,

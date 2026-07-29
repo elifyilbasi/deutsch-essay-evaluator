@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { scoreFromBands } from "@/lib/rubrics/types";
+import { contentPointMarks, scoreFromBands } from "@/lib/rubrics/types";
 import type {
   BandLetter,
   LeitpunktStatus,
@@ -215,6 +215,14 @@ export function buildPrompt(task: TaskContext) {
   // Where the institute marks each Inhaltspunkt separately, the per-Leitpunkt
   // statuses ARE the content score, so the model has to be told what each one is
   // worth - otherwise it treats them as commentary and grades content twice.
+  const countedPoints = contentPoints?.counted ?? leitpunkte.length;
+  // Where a task offers more points than are marked ("Wählen Sie drei aus"), the
+  // model has to be told - otherwise it reads a skipped point as a failure and the
+  // stated total contradicts the rubric's maximum.
+  const choiceNote =
+    contentPoints && countedPoints < leitpunkte.length
+      ? `\n   The task prints ${leitpunkte.length} Leitpunkte but only ${countedPoints} are marked, and the candidate chooses which. Judge every Leitpunkt on its own merits anyway: the best ${countedPoints} are the ones that count, and a point left unanswered on purpose costs nothing.`
+      : "";
   const contentPointText = contentPoints
     ? `CONTENT MARKS — ${contentPoints.label} (pro Inhaltspunkt)
    ${contentPoints.description}
@@ -222,9 +230,9 @@ export function buildPrompt(task: TaskContext) {
      ADDRESSED (${contentPoints.points.ADDRESSED} Punkte): ${contentPoints.descriptors.ADDRESSED}
      PARTIAL (${contentPoints.points.PARTIAL} Punkte): ${contentPoints.descriptors.PARTIAL}
      MISSING (${contentPoints.points.MISSING} Punkte): ${contentPoints.descriptors.MISSING}
-   That is ${leitpunkte.length} × ${contentPoints.points.ADDRESSED} = ${
-     leitpunkte.length * contentPoints.points.ADDRESSED
-   } of the marks available, so these statuses decide almost the whole score. Weigh nothing else into them.
+   That is ${countedPoints} × ${contentPoints.points.ADDRESSED} = ${
+     countedPoints * contentPoints.points.ADDRESSED
+   } of the marks available, so these statuses decide almost the whole score. Weigh nothing else into them.${choiceNote}
 
 `
     : "";
@@ -426,22 +434,27 @@ export async function evaluateEssay(task: TaskContext): Promise<{
   const contentPoints = rubric.contentPointScoring;
   if (contentPoints) {
     const perPoint = contentPoints.points;
-    const earned = coverage.reduce(
-      (sum, c) => sum + (perPoint[c.status] ?? 0),
-      0,
+    const marks = contentPointMarks(
+      contentPoints,
+      coverage.map((c) => c.status),
     );
+    // Only the marks that count: at telc A2 the task prints four Inhaltspunkte and
+    // three are marked, so the one the candidate chose to skip is not described here
+    // as unerfüllt - it simply falls outside the count.
+    const countedStatuses = [...coverage.map((c) => c.status)]
+      .sort((a, b) => (perPoint[b] ?? 0) - (perPoint[a] ?? 0))
+      .slice(0, marks.counted);
+    const fullyMet = countedStatuses.filter((s) => s === "ADDRESSED").length;
     criteriaScores.unshift({
       key: "inhaltspunkte",
-      label: `${contentPoints.label} (${coverage.length} Inhaltspunkte)`,
-      bandDescriptor: coverage
-        .map((c) => contentPoints.descriptors[c.status])
+      label: `${contentPoints.label} (${marks.counted} Inhaltspunkte)`,
+      bandDescriptor: countedStatuses
+        .map((s) => contentPoints.descriptors[s])
         .filter((d, i, all) => all.indexOf(d) === i)
         .join(" · "),
-      score: breakdown.zeroedReason ? 0 : earned,
-      maxScore: coverage.length * Math.max(...Object.values(perPoint)),
-      comment: `${coverage.filter((c) => c.status === "ADDRESSED").length} von ${
-        coverage.length
-      } Inhaltspunkten voll erfüllt.`,
+      score: breakdown.zeroedReason ? 0 : marks.earned,
+      maxScore: marks.max,
+      comment: `${fullyMet} von ${marks.counted} gewerteten Inhaltspunkten voll erfüllt.`,
     });
   }
 

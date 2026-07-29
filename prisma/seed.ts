@@ -133,7 +133,7 @@ Hast du Zeit? Und kannst du vielleicht einen Salat mitbringen?
 Liebe Grüße
 Sabine`,
     instructions:
-      "Antworten Sie Ihrer Freundin. Schreiben Sie etwas zu den folgenden vier Punkten. Überlegen Sie sich eine passende Reihenfolge, eine passende Anrede und einen passenden Schluss.",
+      "Antworten Sie Ihrer Freundin. Hier finden Sie vier Punkte. Wählen Sie drei aus. Schreiben Sie zu jedem Punkt ein bis zwei Sätze (circa 40 Wörter). Vergessen Sie nicht den passenden Anfang und Gruß am Schluss.",
     leitpunkte: [
       "Dank für die Einladung",
       "Ob Sie kommen können",
@@ -142,7 +142,7 @@ Sabine`,
     ],
     register: "DU",
     requiresSubject: false,
-    minWords: 30,
+    minWords: 35,
     maxWords: 50,
   },
   {
@@ -158,7 +158,7 @@ wir wollten doch morgen Abend ins Kino gehen. Der Film fängt um 20 Uhr an. Soll
 Bis morgen!
 Daniel`,
     instructions:
-      "Antworten Sie Ihrem Freund. Schreiben Sie etwas zu den folgenden vier Punkten. Überlegen Sie sich eine passende Reihenfolge, eine passende Anrede und einen passenden Schluss.",
+      "Antworten Sie Ihrem Freund. Hier finden Sie vier Punkte. Wählen Sie drei aus. Schreiben Sie zu jedem Punkt ein bis zwei Sätze (circa 40 Wörter). Vergessen Sie nicht den passenden Anfang und Gruß am Schluss.",
     leitpunkte: [
       "Dass Sie leider absagen müssen",
       "Warum Sie nicht kommen können",
@@ -167,7 +167,7 @@ Daniel`,
     ],
     register: "DU",
     requiresSubject: false,
-    minWords: 30,
+    minWords: 35,
     maxWords: 50,
   },
 

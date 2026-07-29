@@ -19,6 +19,14 @@ export type ContentPointScoring = {
   points: Record<LeitpunktStatus, number>;
   /** The official wording for each mark, shown to the examiner and the learner. */
   descriptors: Record<LeitpunktStatus, string>;
+  /**
+   * How many Inhaltspunkte are actually marked, where the task offers more than the
+   * candidate has to answer. telc A2 prints four and says "Wählen Sie drei aus", so
+   * only three are marked (the Antwortbogen has 1-2-3-K) and the candidate chooses
+   * which — the best three statuses count and the point left out costs nothing.
+   * Omit where every Leitpunkt is marked, as at telc A1.
+   */
+  counted?: number;
 };
 
 /** One selectable grade band within a criterion, with its official point value. */
@@ -97,16 +105,43 @@ export type InstituteRubrics = Partial<Record<Institute, RubricLookup>>;
  * the content marks where those are awarded per Inhaltspunkt. The latter depends on
  * how many Leitpunkte the task sets, which is a property of the task, not the rubric
  * — telc A1's 10 points are 3 Inhaltspunkte x 3 plus 1 for kommunikative Gestaltung.
+ * Where the level marks only some of the points offered (telc A2: four printed,
+ * three chosen), the extra ones raise neither the score nor the maximum.
  */
 export function maxRawScore(rubric: LevelRubric, leitpunktCount = 0): number {
   const criteriaMax = rubric.criteria.reduce(
     (sum, c) => sum + Math.max(...c.bands.map((b) => b.points)),
     0,
   );
-  const contentMax = rubric.contentPointScoring
-    ? leitpunktCount * Math.max(...Object.values(rubric.contentPointScoring.points))
+  const content = rubric.contentPointScoring;
+  const contentMax = content
+    ? countedPoints(content, leitpunktCount) * Math.max(...Object.values(content.points))
     : 0;
   return criteriaMax + contentMax;
+}
+
+/** How many Inhaltspunkte are marked for a task offering `offered` of them. */
+function countedPoints(content: ContentPointScoring, offered: number): number {
+  return content.counted === undefined ? offered : Math.min(content.counted, offered);
+}
+
+/**
+ * The content marks for one submission: what was earned, out of what, over how many
+ * Inhaltspunkte. Single source of truth so the score and the breakdown that explains
+ * it cannot drift apart — telc A2 prints four points and marks the best three, and a
+ * breakdown that counted all four would contradict its own total.
+ */
+export function contentPointMarks(
+  content: ContentPointScoring,
+  statuses: LeitpunktStatus[],
+): { earned: number; max: number; counted: number } {
+  const counted = countedPoints(content, statuses.length);
+  const earned = statuses
+    .map((status) => content.points[status] ?? 0)
+    .sort((a, b) => b - a)
+    .slice(0, counted)
+    .reduce((sum, m) => sum + m, 0);
+  return { earned, max: counted * Math.max(...Object.values(content.points)), counted };
 }
 
 export type ScoreBreakdown = {
@@ -158,9 +193,8 @@ export function scoreFromBands(params: {
 
   const contentPoints = rubric.contentPointScoring;
   if (contentPoints) {
-    raw += statuses.reduce((sum, status) => sum + (contentPoints.points[status] ?? 0), 0);
+    raw += contentPointMarks(contentPoints, statuses).earned;
   }
-
 
   return { raw, total: raw * rubric.scoreMultiplier, maxTotal, zeroedReason: null };
 }
