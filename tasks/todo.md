@@ -339,6 +339,27 @@ worth making deliberately: a missing criterion verdict and an unknown band lette
 fall back to the rubric's last band, which is the 0-point one. That penalises the
 learner for our infrastructure's glitch.
 
+### Golden snapshots + fixtures shared across levels
+
+Two changes against the root pattern — rules being restated downstream of where they
+are defined, then drifting.
+
+**Snapshots** (`tests/snapshots/`, six plain-text files): the exact prompt and response
+schema each level sends. The structural tests catch a prompt that *contradicts* its
+rubric; these catch the other half — a rubric corrected while the prose around it was
+not. Every bug of that kind here was invisible in review because the generated text
+never appeared in a diff. Now it does, per level, in readable form. A failure is not
+automatically a bug: read the diff, and if intended run `npm run test:update` so the
+new text is reviewed next to the rubric change that caused it.
+
+Mutation-tested: changing A1's per-Inhaltspunkt marks from 3/1,5 to 4/2 fails 8 tests,
+the snapshot among them, with "A2.prompt.txt no longer matches what the code generates".
+
+**Shared fixtures** (`tests/fixtures.ts`): one representative task per level, and
+`rubricsUnderTest` iterating the real `telcRubrics` lookup instead of a hand-kept list.
+A new level now picks up every structural and snapshot check automatically, and fails
+loudly until it has a fixture rather than being silently untested.
+
 ### Open
 
 - **The schema change needs applying**: `npx prisma db push`. Not run; it touches the
