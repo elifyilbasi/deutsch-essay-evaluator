@@ -21,9 +21,10 @@ model User {
   image         String?
   passwordHash  String?
 
-  accounts Account[]
-  sessions Session[]
-  essays   Essay[]
+  accounts   Account[]
+  sessions   Session[]
+  essays     Essay[]
+  dailyUsage DailyUsage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -142,6 +143,12 @@ model Essay {
   /// written before timing existed.
   writingSeconds Int?
 
+  /// Client-supplied id for one submit attempt, so a retry after an ambiguous
+  /// timeout returns the first essay instead of paying for a second evaluation.
+  /// Nullable because rows written before this existed have none, and Postgres
+  /// allows any number of NULLs under a unique index.
+  submissionId String? @unique
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   prompt Prompt @relation(fields: [promptId], references: [id])
 
@@ -151,6 +158,29 @@ model Essay {
   updatedAt DateTime @updatedAt
 
   @@index([userId, createdAt])
+}
+
+/// One row per user per UTC day, holding the evaluations charged to them.
+///
+/// Deliberately NOT derived from Essay or Evaluation. Both are user-deletable, and
+/// quota used to be `count(Evaluation)` for today — so submitting, reading the
+/// result and deleting the essay refunded the quota, giving unlimited paid calls on
+/// a shared free-tier key. Nothing in the app deletes these rows.
+model DailyUsage {
+  userId String
+  /// UTC calendar day as "YYYY-MM-DD". A string rather than @db.Date: under driver
+  /// adapters the pg driver parses DATE into a local-time Date, which shifts the day
+  /// either side of midnight. The app has always counted UTC days.
+  day    String
+  /// Evaluations charged today, successful or not. Incremented before the model call,
+  /// so deliberately inducing a failure costs the same as a success.
+  used   Int    @default(0)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, day])
+  @@index([day])
 }
 
 model Evaluation {
