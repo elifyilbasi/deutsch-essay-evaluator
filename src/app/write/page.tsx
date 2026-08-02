@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { countWords } from "@/lib/wordCount";
+import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
 import { safeJson, errorMessage } from "@/lib/safeJson";
 
@@ -79,6 +81,11 @@ export default function WritePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [promptsStatus, setPromptsStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  /** Bumped by "Try again" so the fetch effect re-runs. */
+  const [reloadNonce, setReloadNonce] = useState(0);
   const timer = useWritingTimer();
 
   useEffect(() => {
@@ -95,26 +102,76 @@ export default function WritePage() {
       .then(async (r) => {
         if (!r.ok) {
           toast.error(await errorMessage(r, "Couldn't load the writing tasks."));
-          return null;
+          throw new Error("prompts request failed");
         }
         return safeJson<{ prompts: PromptSummary[] }>(r);
       })
       .then((data) => {
-        if (!cancelled) {
-          setPrompts(data?.prompts ?? []);
-          setSelectedPromptId(null);
-          // A different level means a different task list, so collapse back to page one.
-          setVisibleCount(PAGE_SIZE);
-        }
+        if (cancelled) return;
+        const list = data?.prompts ?? [];
+        setPrompts(list);
+        setPromptsStatus("ready");
+        // Prune rather than clear. A selection made before this resolved - from a
+        // revise link, say - is legitimate and must survive; one that is not in the
+        // list any more (deactivated task, changed level) is the only kind to drop.
+        setSelectedPromptId((prev) =>
+          prev && list.some((p) => p.id === prev) ? prev : null,
+        );
+      })
+      .catch(() => {
+        // Without this the chain rejected unhandled and the card sat on "Loading
+        // tasks..." forever - the state simply never moved again.
+        if (!cancelled) setPromptsStatus("error");
       });
 
     return () => {
       cancelled = true;
     };
-  }, [institute, level]);
+  }, [institute, level, reloadNonce]);
 
   const selectedPrompt = prompts.find((p) => p.id === selectedPromptId) ?? null;
   const wordCount = countWords(content);
+
+  /**
+   * Everything that belongs to one attempt, cleared together. Splitting these up is
+   * what caused the bugs: `content` used to survive a task switch, so text written
+   * for one task was submitted against another, and `submissionId` did too — which
+   * since the server started treating it as an idempotency key meant the second
+   * submission returned the FIRST essay, sending the user to the wrong feedback page.
+   */
+  function resetAttempt() {
+    setContent("");
+    timer.reset();
+    submissionId.current = null;
+  }
+
+  function selectTask(id: string) {
+    if (isSubmitting) return;
+    if (id === selectedPromptId) return;
+    resetAttempt();
+    setSelectedPromptId(id);
+  }
+
+  function selectLevel(next: Level) {
+    if (isSubmitting) return;
+    if (next === level) return;
+    resetAttempt();
+    setLevel(next);
+    setSelectedPromptId(null);
+    setPromptsStatus("loading");
+    // A different level means a different task list, so collapse back to page one.
+    setVisibleCount(PAGE_SIZE);
+  }
+
+  function selectInstitute(next: Institute) {
+    if (isSubmitting) return;
+    if (next === institute) return;
+    resetAttempt();
+    setInstitute(next);
+    setSelectedPromptId(null);
+    setPromptsStatus("loading");
+    setVisibleCount(PAGE_SIZE);
+  }
 
   /** Starts the clock on the first keystroke, matching how the exam actually feels. */
   function handleContentChange(value: string) {
@@ -192,8 +249,8 @@ export default function WritePage() {
                   key={i.value}
                   type="button"
                   variant={institute === i.value ? "default" : "outline"}
-                  disabled={!i.enabled}
-                  onClick={() => setInstitute(i.value)}
+                  disabled={!i.enabled || isSubmitting}
+                  onClick={() => selectInstitute(i.value)}
                 >
                   {i.label}
                   {!i.enabled && (
@@ -213,8 +270,8 @@ export default function WritePage() {
                   key={l.value}
                   type="button"
                   variant={level === l.value ? "default" : "outline"}
-                  disabled={!l.enabled}
-                  onClick={() => setLevel(l.value)}
+                  disabled={!l.enabled || isSubmitting}
+                  onClick={() => selectLevel(l.value)}
                 >
                   {l.label}
                   {!l.enabled && (
@@ -239,15 +296,40 @@ export default function WritePage() {
             />
           </CardHeader>
           <CardContent className="space-y-2">
-            {prompts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Loading tasks…</p>
+            {promptsStatus === "loading" ? (
+              <div className="space-y-2">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : promptsStatus === "error" ? (
+              <div className="space-y-3 py-2">
+                <p className="text-sm text-muted-foreground">
+                  Couldn&apos;t load the writing tasks.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setPromptsStatus("loading");
+                    setReloadNonce((n) => n + 1);
+                  }}
+                >
+                  Try again
+                </Button>
+              </div>
+            ) : prompts.length === 0 ? (
+              <p className="py-2 text-sm text-muted-foreground">
+                No writing tasks for {institute} {level} yet.
+              </p>
             ) : (
               <>
                 {prompts.slice(0, visibleCount).map((p) => (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setSelectedPromptId(p.id)}
+                    onClick={() => selectTask(p.id)}
+                    disabled={isSubmitting}
                     className={`w-full rounded-lg border p-3 text-left transition-colors ${
                       selectedPromptId === p.id
                         ? "border-primary bg-primary/5"
@@ -347,12 +429,21 @@ export default function WritePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/*
+              readOnly rather than disabled while the evaluation runs: text typed
+              during the call used to be silently dropped from the submission, but a
+              disabled textarea also makes the text unselectable, which matters most
+              when the request fails and the user wants to copy their work out.
+            */}
             <Textarea
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
+              readOnly={isSubmitting}
+              aria-busy={isSubmitting}
               rows={12}
+              maxLength={MAX_ESSAY_CHARS}
               placeholder="Schreiben Sie hier Ihren Text..."
-              className="resize-y"
+              className={`resize-y ${isSubmitting ? "opacity-70" : ""}`}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-4">

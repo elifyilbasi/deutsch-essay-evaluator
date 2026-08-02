@@ -100,5 +100,18 @@ export function useWritingTimer() {
     isRunning,
     start: () => setIsRunning(true),
     stop: () => setIsRunning(false),
+    /**
+     * Puts the clock back to `seconds` and stops it. Two callers: switching task
+     * needs reset(0), and restoring a saved draft needs the elapsed time that went
+     * with it. An `initialSeconds` argument to the hook would not serve the second —
+     * a restore happens on a click, long after mount.
+     *
+     * Call it from event handlers only; it is an inline arrow, so putting it in an
+     * effect's dependencies would need `useCallback` on all three.
+     */
+    reset: (seconds = 0) => {
+      setElapsedSeconds(seconds);
+      setIsRunning(false);
+    },
   };
 }
