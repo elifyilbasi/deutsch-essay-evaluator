@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { countWords } from "@/lib/wordCount";
 import { getRemainingEvaluationsToday } from "@/lib/rateLimit";
 import { getRubric } from "@/lib/rubrics";
+import { MAX_BODY_BYTES, checkEssayLength, exceedsBodyLimit } from "@/lib/essayLimits";
 import { evaluateEssay } from "@/lib/gemini";
 
 export async function POST(request: Request) {
@@ -26,7 +27,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  // Cheap gate first: App Router route handlers have no default body cap, so
+  // `request.json()` on a huge body allocates before any validation runs.
+  if (exceedsBodyLimit(request.headers.get("content-length"))) {
+    return NextResponse.json({ error: "That submission is too large." }, { status: 413 });
+  }
+
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "That submission is too large." }, { status: 413 });
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: "Malformed request body." }, { status: 400 });
+  }
+
   const { promptId, content, writingSeconds } = body as {
     promptId?: string;
     content?: string;
@@ -53,6 +71,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const wordCount = countWords(content);
+  // Enforced here, not just in the browser: the textarea's maxLength is a courtesy,
+  // this is what stops an oversized text reaching a paid model call.
+  const tooLong = checkEssayLength(content, rubric, wordCount);
+  if (tooLong) {
+    return NextResponse.json({ error: tooLong }, { status: 400 });
+  }
+
   const { remaining, limit } = await getRemainingEvaluationsToday(session.user.id);
   if (remaining <= 0) {
     return NextResponse.json(
@@ -62,8 +88,6 @@ export async function POST(request: Request) {
       { status: 429 },
     );
   }
-
-  const wordCount = countWords(content);
 
   let evaluation;
   try {

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Institute, Level } from "@/generated/prisma/client";
 import { getRubric } from "@/lib/rubrics";
+import { parseEnumValue } from "@/lib/parseEnum";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -11,15 +12,10 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const institute = searchParams.get("institute");
-  const level = searchParams.get("level");
+  const institute = parseEnumValue(Institute, searchParams.get("institute"));
+  const level = parseEnumValue(Level, searchParams.get("level"));
 
-  if (
-    !institute ||
-    !level ||
-    !(institute in Institute) ||
-    !(level in Level)
-  ) {
+  if (!institute || !level) {
     return NextResponse.json(
       { error: "Query params 'institute' and 'level' are required and must be valid." },
       { status: 400 },
@@ -27,7 +23,7 @@ export async function GET(request: Request) {
   }
 
   const prompts = await prisma.prompt.findMany({
-    where: { institute: institute as Institute, level: level as Level, isActive: true },
+    where: { institute, level, isActive: true },
     select: {
       id: true,
       title: true,
@@ -45,7 +41,7 @@ export async function GET(request: Request) {
   });
 
   // The exam time limit lives in the rubric (server-only), so attach it here for the client.
-  const rubric = getRubric(institute as Institute, level as Level);
+  const rubric = getRubric(institute, level);
 
   // How often this user has attempted each task, and their best score on it.
   const attempts = await prisma.essay.findMany({
@@ -64,13 +60,21 @@ export async function GET(request: Request) {
     string,
     { attemptCount: number; bestScore: number; maxScore: number }
   >();
+  // Best attempt by ratio, carrying that attempt's OWN maximum. Taking Math.max over
+  // scores and then tacking on whichever maxScore happened to be iterated last could
+  // display one attempt's score against another's denominator - "9 / 7" - and each
+  // Evaluation stores its own maximum precisely so historical rows survive rubric
+  // changes (see prisma/schema.prisma).
   for (const attempt of attempts) {
     if (!attempt.evaluation) continue;
+    const { overallScore, maxScore } = attempt.evaluation;
     const current = practiceByPrompt.get(attempt.promptId);
+    const isBest =
+      !current || overallScore / maxScore > current.bestScore / current.maxScore;
     practiceByPrompt.set(attempt.promptId, {
       attemptCount: (current?.attemptCount ?? 0) + 1,
-      bestScore: Math.max(current?.bestScore ?? 0, attempt.evaluation.overallScore),
-      maxScore: attempt.evaluation.maxScore,
+      bestScore: isBest ? overallScore : current.bestScore,
+      maxScore: isBest ? maxScore : current.maxScore,
     });
   }
 

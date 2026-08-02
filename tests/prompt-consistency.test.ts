@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { telcRubrics } from "@/lib/rubrics/telc";
-import { buildPrompt } from "@/lib/gemini";
+import { buildPrompt, resultFromVerdict } from "@/lib/gemini";
 import { maxRawScore } from "@/lib/rubrics/types";
+import type { LeitpunktStatus } from "@/lib/rubrics/types";
 import { representativeTask, rubricsUnderTest } from "./fixtures";
 
 /**
@@ -50,6 +51,56 @@ describe("every mark the prompt states agrees with the rubric", () => {
       );
       for (const key of foreign) {
         assert.ok(!prompt.includes(`key="${key}"`), `${level} offers a foreign criterion ${key}`);
+      }
+    });
+  }
+});
+
+describe("the prompt and the scorer agree on the maximum", () => {
+  // The closing half of the loop. The checks above prove the prompt does not
+  // contradict its rubric; these prove the SCORER does not contradict the prompt,
+  // whatever the model sends back. That is the bug this file exists for: the scorer
+  // used to derive the maximum from the verdict's coverage array, so a short reply
+  // was quietly scored out of a smaller total than the prompt had announced.
+  for (const [level, rubric] of rubricsUnderTest) {
+    it(`${level}: the maximum is a property of the task, not of the verdict`, () => {
+      const task = representativeTask(rubric);
+      const stated = maxRawScore(rubric, task.leitpunkte.length) * rubric.scoreMultiplier;
+
+      const shapes: LeitpunktStatus[][] = [
+        task.leitpunkte.map(() => "ADDRESSED" as const),
+        task.leitpunkte.slice(1).map(() => "ADDRESSED" as const), // examiner returned one fewer
+        [], // examiner returned none at all
+        [...task.leitpunkte, "extra"].map(() => "ADDRESSED" as const), // one too many
+      ];
+
+      for (const statuses of shapes) {
+        const result = resultFromVerdict(
+          {
+            themaVerfehlt: false,
+            leitpunktCoverage: statuses.map((status, i) => ({
+              leitpunkt: `Punkt ${i + 1}`,
+              status,
+              comment: "",
+            })),
+            criteriaVerdicts: rubric.criteria.map((c) => ({
+              key: c.key,
+              band: c.bands[0].band,
+              comment: "",
+            })),
+            corrections: [],
+            summaryFeedback: "",
+          },
+          task,
+        );
+        assert.equal(
+          result.maxScore,
+          stated,
+          `${level}: a verdict of ${statuses.length} statuses moved the maximum`,
+        );
+        // And the breakdown must still explain the total printed beside it.
+        const sum = result.criteriaScores.reduce((t, c) => t + c.score, 0);
+        assert.equal(sum, result.rawScore, `${level}: breakdown does not sum to rawScore`);
       }
     });
   }

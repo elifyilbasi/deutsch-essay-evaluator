@@ -29,8 +29,16 @@ const verdict = (v: Partial<ExaminerVerdict> = {}): ExaminerVerdict => ({
   ...v,
 });
 
-const run = (rubric: LevelRubric, v: Partial<ExaminerVerdict>) =>
-  resultFromVerdict(verdict(v), { rubric, level: rubric.level });
+/** `offered` is the task's Leitpunkt count, independent of what the verdict returns. */
+const run = (rubric: LevelRubric, v: Partial<ExaminerVerdict>, offered?: number) =>
+  resultFromVerdict(verdict(v), {
+    rubric,
+    level: rubric.level,
+    leitpunkte: Array.from(
+      { length: offered ?? (rubric.level === "B1" || rubric.level === "A2" ? 4 : 3) },
+      (_, i) => `Punkt ${i + 1}`,
+    ),
+  });
 
 /** The breakdown must always explain the total it is printed beside. */
 const assertSelfConsistent = (result: ReturnType<typeof run>) => {
@@ -112,17 +120,49 @@ describe("a model that returns something unexpected", () => {
     assertSelfConsistent(r);
   });
 
-  it("handles an empty coverage list without producing NaN", () => {
+  it("scores an empty coverage list as 0 out of the task's full total", () => {
     const r = run(A1, {
       leitpunktCoverage: [],
       criteriaVerdicts: [{ key: "kommunikativeGestaltung", band: "A", comment: "" }],
     });
-    assert.ok(Number.isFinite(r.overallScore));
-    assert.ok(Number.isFinite(r.maxScore));
-    // Nothing was judged, so no content row is shown at all: a row with a maximum
-    // of 0 divides by zero in the progress bar.
-    assert.ok(!r.criteriaScores.some((c) => c.key === "inhaltspunkte"));
+    // The row is shown rather than omitted, because its maximum comes from the task
+    // and so can never be 0. Nothing judged is 0 of 9, which is the honest reading —
+    // the alternative silently scored the candidate out of a smaller total.
+    const content = r.criteriaScores.find((c) => c.key === "inhaltspunkte");
+    assert.ok(content, "the content row must be shown even with no coverage");
+    assert.equal(content.score, 0);
+    assert.equal(content.maxScore, 9);
+    assert.equal(r.overallScore, 1, "only the KG mark was earned");
+    assert.equal(r.maxScore, 10, "out of the task's full total, not a shrunken one");
     assertSelfConsistent(r);
+  });
+
+  it("does not let a short verdict shrink the maximum", () => {
+    // A four-point A2 task where the examiner returned only three entries.
+    const r = run(
+      A2,
+      {
+        leitpunktCoverage: cover(["ADDRESSED", "ADDRESSED", "ADDRESSED"]),
+        criteriaVerdicts: [{ key: "kommunikativeGestaltung", band: "A", comment: "" }],
+      },
+      4,
+    );
+    assert.equal(r.maxScore, 10);
+    assert.equal(r.criteriaScores[0].maxScore, 9);
+    assertSelfConsistent(r);
+
+    // And a three-point A1 task where only two came back: 6 + 1 out of 10, not 7/7.
+    const short = run(
+      A1,
+      {
+        leitpunktCoverage: cover(["ADDRESSED", "ADDRESSED"]),
+        criteriaVerdicts: [{ key: "kommunikativeGestaltung", band: "A", comment: "" }],
+      },
+      3,
+    );
+    assert.equal(short.maxScore, 10);
+    assert.equal(short.overallScore, 7);
+    assertSelfConsistent(short);
   });
 
   it("handles more coverage entries than the task has Leitpunkte", () => {
@@ -144,6 +184,7 @@ describe("a model that returns something unexpected", () => {
     const r = resultFromVerdict({ themaVerfehlt: false } as ExaminerVerdict, {
       rubric: A1,
       level: "A1",
+      leitpunkte: ["a", "b", "c"],
     });
     assert.ok(Number.isFinite(r.overallScore));
     assert.deepEqual(r.corrections, []);

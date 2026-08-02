@@ -24,6 +24,7 @@ describe("telc B1 — Zertifikat Deutsch, Übungstest 1 (2019)", () => {
       rubric: B1,
       bands: { leitpunkte: l, kommunikativeGestaltung: kg, formaleRichtigkeit: fr },
       themaVerfehlt,
+      leitpunktCount: 4,
       leitpunktStatuses: [A, A, A, A],
     });
 
@@ -59,11 +60,17 @@ describe("telc B1 — Zertifikat Deutsch, Übungstest 1 (2019)", () => {
 });
 
 describe("telc A1 — Start Deutsch 1, Übungstest 1", () => {
-  const score = (statuses: LeitpunktStatus[], kg: "A" | "B" | "C", themaVerfehlt = false) =>
+  const score = (
+    statuses: LeitpunktStatus[],
+    kg: "A" | "B" | "C",
+    themaVerfehlt = false,
+    offered = 3,
+  ) =>
     scoreFromBands({
       rubric: A1,
       bands: { kommunikativeGestaltung: kg },
       themaVerfehlt,
+      leitpunktCount: offered,
       leitpunktStatuses: statuses,
     });
 
@@ -98,14 +105,23 @@ describe("telc A1 — Start Deutsch 1, Übungstest 1", () => {
     assert.equal(A1.contentPointScoring?.counted, undefined);
     assert.equal(maxRawScore(A1, 4), 13);
   });
+
+  it("keeps the task's maximum when the examiner returns fewer statuses", () => {
+    // A three-point task graded on a verdict listing only two: the missing point
+    // costs its marks, it does not shrink the total the score is out of.
+    const short = score([A, A], "A", false, 3);
+    assert.equal(short.maxTotal, 10, "the task sets the maximum, not the verdict");
+    assert.equal(short.total, 7, "6 for two points plus 1 for KG");
+  });
 });
 
 describe("telc A2 — Start Deutsch 2, Übungstest 1", () => {
-  const score = (statuses: LeitpunktStatus[], kg: "A" | "B" | "C") =>
+  const score = (statuses: LeitpunktStatus[], kg: "A" | "B" | "C", offered = 4) =>
     scoreFromBands({
       rubric: A2,
       bands: { kommunikativeGestaltung: kg },
       themaVerfehlt: false,
+      leitpunktCount: offered,
       leitpunktStatuses: statuses,
     });
 
@@ -130,5 +146,15 @@ describe("telc A2 — Start Deutsch 2, Übungstest 1", () => {
   it("scores a half KG mark", () => {
     assert.equal(score([A, A, A, M], "B").total, 9.5);
     assert.equal(score([M, M, M, M], "C").total, 0);
+  });
+
+  it("holds the maximum at 10 whatever the verdict's length", () => {
+    for (const statuses of [[A, A, A], [A, A, A, M], [A, A, A, A, A]]) {
+      assert.equal(
+        score(statuses as LeitpunktStatus[], "A").maxTotal,
+        10,
+        `maximum moved for a verdict of ${statuses.length} statuses`,
+      );
+    }
   });
 });

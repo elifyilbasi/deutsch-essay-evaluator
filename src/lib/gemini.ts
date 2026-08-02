@@ -418,9 +418,12 @@ export async function evaluateEssay(task: TaskContext): Promise<{
  */
 export function resultFromVerdict(
   verdict: ExaminerVerdict,
-  task: Pick<TaskContext, "rubric" | "level">,
+  task: Pick<TaskContext, "rubric" | "level" | "leitpunkte">,
 ): EvaluationResult {
   const { rubric, level } = task;
+  // The task's own count, never the examiner's. A verdict that lists fewer points
+  // than the task sets must lose those marks, not be scored out of a smaller total.
+  const leitpunktCount = task.leitpunkte.length;
 
   const bands = Object.fromEntries(
     (verdict.criteriaVerdicts ?? []).map((v) => [v.key, v.band]),
@@ -431,6 +434,7 @@ export function resultFromVerdict(
     rubric,
     bands,
     themaVerfehlt: Boolean(verdict.themaVerfehlt),
+    leitpunktCount,
     leitpunktStatuses: coverage.map((c) => c.status),
   });
 
@@ -457,13 +461,15 @@ export function resultFromVerdict(
   // are summed into one line that leads the breakdown, mirroring the "1-2-3-KG"
   // order of telc's own Antwortbogen. The per-point detail is the coverage list.
   const contentPoints = rubric.contentPointScoring;
-  // No coverage entries means nothing was judged, so there is no content row to
-  // show - and a row with a maximum of 0 would render as a NaN-wide progress bar.
-  if (contentPoints && coverage.length > 0) {
+  // Always shown now: the maximum comes from the task, so it cannot be zero even if
+  // the examiner returned no coverage at all - that case is 0 out of the full total,
+  // which is the honest reading, rather than a row quietly omitted.
+  if (contentPoints) {
     const perPoint = contentPoints.points;
     const marks = contentPointMarks(
       contentPoints,
       coverage.map((c) => c.status),
+      leitpunktCount,
     );
     // Only the marks that count: at telc A2 the task prints four Inhaltspunkte and
     // three are marked, so the one the candidate chose to skip is not described here

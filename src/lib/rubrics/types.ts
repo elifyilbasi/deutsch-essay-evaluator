@@ -134,8 +134,14 @@ function countedPoints(content: ContentPointScoring, offered: number): number {
 export function contentPointMarks(
   content: ContentPointScoring,
   statuses: LeitpunktStatus[],
+  /**
+   * How many Leitpunkte the TASK sets. Separate from `statuses.length`, which is only
+   * how many the examiner returned: deriving the maximum from the examiner's output
+   * let a short reply shrink its own denominator.
+   */
+  offered: number,
 ): { earned: number; max: number; counted: number } {
-  const counted = countedPoints(content, statuses.length);
+  const counted = countedPoints(content, offered);
   const earned = statuses
     .map((status) => content.points[status] ?? 0)
     .sort((a, b) => b - a)
@@ -163,12 +169,21 @@ export function scoreFromBands(params: {
   rubric: LevelRubric;
   bands: Record<string, BandLetter>;
   themaVerfehlt: boolean;
+  /**
+   * How many Leitpunkte the task sets. Required, not defaulted: the maximum is a
+   * property of the task, and the previous code took it from the examiner's coverage
+   * array instead, so a verdict listing three points for a four-point task scored the
+   * candidate out of a smaller total. Two attempts at one task could end up with
+   * different denominators. Requiring it is what stops a caller substituting the
+   * model's count again.
+   */
+  leitpunktCount: number;
   /** One status per Leitpunkt; only consulted when the rubric marks per Inhaltspunkt. */
   leitpunktStatuses?: LeitpunktStatus[];
 }): ScoreBreakdown {
-  const { rubric, bands, themaVerfehlt } = params;
+  const { rubric, bands, themaVerfehlt, leitpunktCount } = params;
   const statuses = params.leitpunktStatuses ?? [];
-  const maxRaw = maxRawScore(rubric, statuses.length);
+  const maxRaw = maxRawScore(rubric, leitpunktCount);
   const maxTotal = maxRaw * rubric.scoreMultiplier;
 
   if (themaVerfehlt && rubric.themaVerfehltZeroesTask) {
@@ -193,7 +208,7 @@ export function scoreFromBands(params: {
 
   const contentPoints = rubric.contentPointScoring;
   if (contentPoints) {
-    raw += contentPointMarks(contentPoints, statuses).earned;
+    raw += contentPointMarks(contentPoints, statuses, leitpunktCount).earned;
   }
 
   return { raw, total: raw * rubric.scoreMultiplier, maxTotal, zeroedReason: null };
