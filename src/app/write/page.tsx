@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,8 @@ const LEVELS: { value: Level; label: string; enabled: boolean }[] = [
 
 export default function WritePage() {
   const router = useRouter();
+  /** Idempotency key for the current attempt; see handleContentChange. */
+  const submissionId = useRef<string | null>(null);
   const [institute, setInstitute] = useState<Institute>("TELC");
   const [level, setLevel] = useState<Level | null>(null);
   const [prompts, setPrompts] = useState<PromptSummary[]>([]);
@@ -120,6 +122,12 @@ export default function WritePage() {
     if (!timer.isRunning && value.length > 0) {
       timer.start();
     }
+    // One id per attempt, minted with the first keystroke. If a submit times out and
+    // the user retries, the server recognises the id and returns the essay it already
+    // charged for rather than evaluating - and paying for - the same text twice.
+    if (!submissionId.current) {
+      submissionId.current = crypto.randomUUID();
+    }
   }
 
   async function handleSubmit() {
@@ -134,6 +142,7 @@ export default function WritePage() {
           promptId: selectedPrompt.id,
           content,
           writingSeconds: timer.elapsedSeconds,
+          submissionId: submissionId.current,
         }),
       });
 
@@ -152,6 +161,9 @@ export default function WritePage() {
       }
 
       toast.success("Essay evaluated!");
+      // Cleared only once the attempt is genuinely finished, so every retry in
+      // between reuses the same id.
+      submissionId.current = null;
       router.push(`/essays/${data.id}`);
     } catch (error) {
       // Network failure or an aborted request never reaches the response checks above.

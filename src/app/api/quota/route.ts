@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getRemainingEvaluationsToday } from "@/lib/rateLimit";
+import { getUsageToday } from "@/lib/rateLimit";
 
 export async function GET() {
   const session = await auth();
@@ -8,6 +8,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const quota = await getRemainingEvaluationsToday(session.user.id);
+  const quota = await getUsageToday(session.user.id);
   return NextResponse.json(quota);
 }
