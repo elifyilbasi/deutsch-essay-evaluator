@@ -8,6 +8,7 @@ import { InstituteLevelBadge, ScoreBadge } from "@/components/essay-badges";
 import { CriteriaBreakdown } from "@/components/criteria-breakdown";
 import { AnnotatedEssay } from "@/components/annotated-essay";
 import { LeitpunktCoverageList } from "@/components/leitpunkt-coverage";
+import { TaskBrief } from "@/components/task-brief";
 import { formatDuration } from "@/lib/formatDuration";
 import { getRubric } from "@/lib/rubrics";
 import type { CriterionScore, Correction, LeitpunktCoverage } from "@/lib/gemini";
@@ -75,6 +76,31 @@ export default async function EssayDetailPage({
           </CardContent>
         </Card>
       )}
+
+      {/*
+        The same brief the writer saw. Without it, feedback like "Leitpunkt 3 is
+        missing" names something that appears nowhere on the page — the coverage list
+        below echoes the model's own wording, not the task's.
+      */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">The task · Die Aufgabe</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TaskBrief
+            instructions={essay.prompt.instructions}
+            leitpunkte={essay.prompt.leitpunkte}
+            register={essay.prompt.register}
+            requiresSubject={essay.prompt.requiresSubject}
+            stimulusAuthor={essay.prompt.stimulusAuthor}
+            minWords={essay.prompt.minWords}
+            maxWords={essay.prompt.maxWords}
+            timeLimitMinutes={rubric?.timeLimitMinutes ?? null}
+            actualWordCount={essay.wordCount}
+            actualSeconds={essay.writingSeconds ?? undefined}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

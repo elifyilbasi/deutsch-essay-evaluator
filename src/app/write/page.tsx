@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TaskBrief } from "@/components/task-brief";
 import { countWords } from "@/lib/wordCount";
 import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
@@ -445,33 +446,16 @@ function WriteWizard() {
               </div>
             )}
 
-            <div>
-              <p className="text-sm">{selectedPrompt.instructions}</p>
-              <ul className="mt-3 space-y-1.5">
-                {selectedPrompt.leitpunkte.map((punkt, i) => (
-                  <li key={i} className="flex gap-2 text-sm">
-                    <span className="text-muted-foreground">{i + 1}.</span>
-                    <span className="font-medium">{punkt}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex flex-wrap gap-2 text-xs">
-              <Badge variant="outline">
-                {selectedPrompt.register === "SIE" ? "Formell — Sie" : "Informell — du"}
-              </Badge>
-              {selectedPrompt.requiresSubject && <Badge variant="outline">Betreff nötig</Badge>}
-              {selectedPrompt.stimulusAuthor && (
-                <Badge variant="outline">Antwort an {selectedPrompt.stimulusAuthor}</Badge>
-              )}
-              <Badge variant="outline">
-                {selectedPrompt.minWords}-{selectedPrompt.maxWords} Wörter
-              </Badge>
-              {selectedPrompt.timeLimitMinutes && (
-                <Badge variant="outline">{selectedPrompt.timeLimitMinutes} Minuten</Badge>
-              )}
-            </div>
+            <TaskBrief
+              instructions={selectedPrompt.instructions}
+              leitpunkte={selectedPrompt.leitpunkte}
+              register={selectedPrompt.register}
+              requiresSubject={selectedPrompt.requiresSubject}
+              stimulusAuthor={selectedPrompt.stimulusAuthor}
+              minWords={selectedPrompt.minWords}
+              maxWords={selectedPrompt.maxWords}
+              timeLimitMinutes={selectedPrompt.timeLimitMinutes}
+            />
           </CardContent>
         </Card>
       )}
