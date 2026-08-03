@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,9 +12,13 @@ import { countWords } from "@/lib/wordCount";
 import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
 import { safeJson, errorMessage } from "@/lib/safeJson";
-
-type Institute = "TELC" | "GOETHE";
-type Level = "A1" | "A2" | "B1" | "B2" | "C1";
+import {
+  INSTITUTES,
+  LEVELS,
+  parseWriteParams,
+  visibleCountFor,
+} from "@/lib/writeParams";
+import type { Institute, Level } from "@/lib/writeParams";
 
 type PromptSummary = {
   id: string;
@@ -34,11 +38,6 @@ type PromptSummary = {
 
 /** How many tasks are shown before "Show more" is needed. */
 const PAGE_SIZE = 3;
-
-const INSTITUTES: { value: Institute; label: string; enabled: boolean }[] = [
-  { value: "TELC", label: "TELC", enabled: true },
-  { value: "GOETHE", label: "Goethe-Institut", enabled: false },
-];
 
 /**
  * Step heading: English leads (the UI language), with the German exam term after
@@ -61,22 +60,28 @@ function StepTitle({
   );
 }
 
-const LEVELS: { value: Level; label: string; enabled: boolean }[] = [
-  { value: "A1", label: "A1", enabled: true },
-  { value: "A2", label: "A2", enabled: true },
-  { value: "B1", label: "B1", enabled: true },
-  { value: "B2", label: "B2", enabled: false },
-  { value: "C1", label: "C1", enabled: false },
-];
-
-export default function WritePage() {
+function WriteWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  /**
+   * A revise link, read once. Consumed in the state initialisers below rather than in
+   * an effect, so the prompt fetch fires with the right institute/level on the first
+   * render and the selection is already in place when the list lands.
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const revise = useMemo(() => parseWriteParams(searchParams), []);
+  /** Set while the URL still describes the state, so we know to clean it and can tell
+   * the user if the task it pointed at has gone. */
+  const urlPromptId = useRef<string | null>(revise?.promptId ?? null);
+
   /** Idempotency key for the current attempt; see handleContentChange. */
   const submissionId = useRef<string | null>(null);
-  const [institute, setInstitute] = useState<Institute>("TELC");
-  const [level, setLevel] = useState<Level | null>(null);
+  const [institute, setInstitute] = useState<Institute>(revise?.institute ?? "TELC");
+  const [level, setLevel] = useState<Level | null>(revise?.level ?? null);
   const [prompts, setPrompts] = useState<PromptSummary[]>([]);
-  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(
+    revise?.promptId ?? null,
+  );
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
@@ -117,6 +122,20 @@ export default function WritePage() {
         setSelectedPromptId((prev) =>
           prev && list.some((p) => p.id === prev) ? prev : null,
         );
+
+        // A revise link pointing at a task that is gone (deactivated, or a stale
+        // link) leaves the user on step 2 with a real list rather than a phantom.
+        const fromUrl = urlPromptId.current;
+        if (fromUrl) {
+          const index = list.findIndex((p) => p.id === fromUrl);
+          if (index === -1) {
+            toast.info("That task isn't available any more — pick another one below.");
+            urlPromptId.current = null;
+          } else {
+            // The task may sit past the fold; reveal it so step 2 highlights it.
+            setVisibleCount((n) => visibleCountFor(index, PAGE_SIZE, n));
+          }
+        }
       })
       .catch(() => {
         // Without this the chain rejected unhandled and the card sat on "Loading
@@ -139,6 +158,21 @@ export default function WritePage() {
    * since the server started treating it as an idempotency key meant the second
    * submission returned the FIRST essay, sending the user to the wrong feedback page.
    */
+  /**
+   * Drops the revise params once the user picks something else. Not on arrival: a
+   * refresh would then dump them back into an empty wizard. Not never, either — the
+   * URL would keep claiming a task they had moved on from, and a refresh would yank
+   * them back to it. replaceState rather than router.replace: no navigation, no
+   * scroll jump, no RSC round trip.
+   */
+  function cleanUrlIfDiverged() {
+    if (!urlPromptId.current && !revise) return;
+    if (typeof window !== "undefined" && window.location.search) {
+      window.history.replaceState(null, "", "/write");
+    }
+    urlPromptId.current = null;
+  }
+
   function resetAttempt() {
     setContent("");
     timer.reset();
@@ -148,6 +182,7 @@ export default function WritePage() {
   function selectTask(id: string) {
     if (isSubmitting) return;
     if (id === selectedPromptId) return;
+    cleanUrlIfDiverged();
     resetAttempt();
     setSelectedPromptId(id);
   }
@@ -155,6 +190,7 @@ export default function WritePage() {
   function selectLevel(next: Level) {
     if (isSubmitting) return;
     if (next === level) return;
+    cleanUrlIfDiverged();
     resetAttempt();
     setLevel(next);
     setSelectedPromptId(null);
@@ -166,6 +202,7 @@ export default function WritePage() {
   function selectInstitute(next: Institute) {
     if (isSubmitting) return;
     if (next === institute) return;
+    cleanUrlIfDiverged();
     resetAttempt();
     setInstitute(next);
     setSelectedPromptId(null);
@@ -477,5 +514,18 @@ export default function WritePage() {
         </Card>
       )}
     </div>
+  );
+}
+
+/**
+ * useSearchParams needs a Suspense boundary or the whole route opts out of static
+ * rendering — it passes `next dev` without one and fails `next build`. Same split as
+ * src/app/login/page.tsx.
+ */
+export default function WritePage() {
+  return (
+    <Suspense fallback={null}>
+      <WriteWizard />
+    </Suspense>
   );
 }

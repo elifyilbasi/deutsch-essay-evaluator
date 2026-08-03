@@ -1,0 +1,69 @@
+/**
+ * The exam options the write wizard offers, and the parsing of a "revise this task"
+ * link into them.
+ *
+ * These lists live here rather than in the page so that both the wizard and the
+ * parser read the same source: a link may only preselect something the wizard would
+ * actually let you pick, so a level that is not enabled yet cannot be reached by
+ * hand-editing a URL.
+ */
+
+export type Institute = "TELC" | "GOETHE";
+export type Level = "A1" | "A2" | "B1" | "B2" | "C1";
+
+export const INSTITUTES: { value: Institute; label: string; enabled: boolean }[] = [
+  { value: "TELC", label: "TELC", enabled: true },
+  { value: "GOETHE", label: "Goethe-Institut", enabled: false },
+];
+
+export const LEVELS: { value: Level; label: string; enabled: boolean }[] = [
+  { value: "A1", label: "A1", enabled: true },
+  { value: "A2", label: "A2", enabled: true },
+  { value: "B1", label: "B1", enabled: true },
+  { value: "B2", label: "B2", enabled: false },
+  { value: "C1", label: "C1", enabled: false },
+];
+
+export type WriteParams = {
+  institute: Institute;
+  level: Level;
+  promptId: string;
+};
+
+/** A minimal reader, so this stays testable without a URLSearchParams instance. */
+type ParamReader = { get(name: string): string | null };
+
+function enabledValue<T extends string>(
+  options: { value: T; enabled: boolean }[],
+  raw: string | null,
+): T | null {
+  // Matched against the option list, never `raw in SomeObject` — the enums are plain
+  // objects, so `in` also matches Object.prototype keys and would let
+  // ?institute=constructor through. Same reasoning as src/lib/parseEnum.ts.
+  const match = options.find((o) => o.value === raw);
+  return match && match.enabled ? match.value : null;
+}
+
+/**
+ * Reads a revise link. All three parts must be present and usable or the whole thing
+ * is null and the wizard starts from scratch — a half-valid link should not drop the
+ * user somewhere they did not ask to be, and a malformed one is not their fault.
+ */
+export function parseWriteParams(params: ParamReader): WriteParams | null {
+  const institute = enabledValue(INSTITUTES, params.get("institute"));
+  const level = enabledValue(LEVELS, params.get("level"));
+  const promptId = params.get("promptId");
+  if (!institute || !level || !promptId) return null;
+  return { institute, level, promptId };
+}
+
+/**
+ * How many task cards to show so that the one at `index` is among them. A revise
+ * link can point at a task sitting past the fold, and step 2 would otherwise
+ * highlight nothing while steps 3 and 4 render the task perfectly well.
+ */
+export function visibleCountFor(index: number, pageSize: number, current = pageSize): number {
+  if (index < 0) return current;
+  const needed = Math.ceil((index + 1) / pageSize) * pageSize;
+  return Math.max(current, needed);
+}

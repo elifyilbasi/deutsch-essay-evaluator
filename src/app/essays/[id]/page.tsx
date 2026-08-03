@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InstituteLevelBadge, ScoreBadge } from "@/components/essay-badges";
 import { CriteriaBreakdown } from "@/components/criteria-breakdown";
@@ -47,6 +49,17 @@ export default async function EssayDetailPage({
               maxScore={evaluation.maxScore}
             />
           )}
+          {/*
+            Everything the write page needs to land straight on this task is already
+            here on the essay, so no lookup endpoint is required. The wizard rejects
+            anything it would not let you pick by hand.
+          */}
+          <Link
+            href={`/write?institute=${essay.institute}&level=${essay.level}&promptId=${essay.promptId}`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Practise this task again
+          </Link>
         </div>
       </div>
 
