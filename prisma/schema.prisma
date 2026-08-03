@@ -81,10 +81,12 @@ enum Level {
   C1
 }
 
+/// Only what cannot be derived. Whether an essay has been evaluated is whether an
+/// Evaluation row exists for it — storing that as a third status here meant the two
+/// could disagree, and an essay whose evaluation was gone still claimed EVALUATED.
 enum EssayStatus {
   DRAFT
   SUBMITTED
-  EVALUATED
 }
 
 /// Whether the task expects the informal "du" or the formal "Sie" register.

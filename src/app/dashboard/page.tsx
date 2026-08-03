@@ -52,7 +52,7 @@ export default async function DashboardPage() {
                 </Link>
                 <CardAction className="flex items-center gap-2">
                   <InstituteLevelBadge institute={essay.institute} level={essay.level} />
-                  <StatusBadge status={essay.status} />
+                  <StatusBadge status={essay.status} hasEvaluation={essay.evaluation !== null} />
                   {essay.evaluation && (
                     <ScoreBadge
                       overallScore={essay.evaluation.overallScore}

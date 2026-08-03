@@ -204,30 +204,25 @@ export async function POST(request: Request) {
     );
   }
 
-  // One transaction: the evaluation lands and the essay leaves SUBMITTED together, so
-  // there is no state where a scored essay still looks unscored.
+  // Only the evaluation is written. "Evaluated" is not a second fact to store on the
+  // essay - it is whether this row exists. Storing it twice is what let an essay claim
+  // EVALUATED while its evaluation was gone.
   try {
-    await prisma.$transaction([
-      prisma.evaluation.create({
-        data: {
-          essayId: essay.id,
-          overallScore: evaluation.result.overallScore,
-          maxScore: evaluation.result.maxScore,
-          rawScore: evaluation.result.rawScore,
-          zeroedReason: evaluation.result.zeroedReason,
-          resultLabel: evaluation.result.resultLabel,
-          criteriaScores: evaluation.result.criteriaScores,
-          leitpunktCoverage: evaluation.result.leitpunktCoverage,
-          corrections: evaluation.result.corrections,
-          summaryFeedback: evaluation.result.summaryFeedback,
-          rawModelResponse: evaluation.raw,
-        },
-      }),
-      prisma.essay.update({
-        where: { id: essay.id },
-        data: { status: "EVALUATED" },
-      }),
-    ]);
+    await prisma.evaluation.create({
+      data: {
+        essayId: essay.id,
+        overallScore: evaluation.result.overallScore,
+        maxScore: evaluation.result.maxScore,
+        rawScore: evaluation.result.rawScore,
+        zeroedReason: evaluation.result.zeroedReason,
+        resultLabel: evaluation.result.resultLabel,
+        criteriaScores: evaluation.result.criteriaScores,
+        leitpunktCoverage: evaluation.result.leitpunktCoverage,
+        corrections: evaluation.result.corrections,
+        summaryFeedback: evaluation.result.summaryFeedback,
+        rawModelResponse: evaluation.raw,
+      },
+    });
   } catch (error) {
     // The paid response is about to be lost, and this log is its only durable trace.
     // The essay itself survives as SUBMITTED, so the user keeps their text.
