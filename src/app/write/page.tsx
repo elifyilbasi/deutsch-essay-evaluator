@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,6 +20,11 @@ import {
   visibleCountFor,
 } from "@/lib/writeParams";
 import type { Institute, Level } from "@/lib/writeParams";
+import {
+  DraftNotice,
+  DraftStatusLine,
+  useDraftAutosave,
+} from "@/components/draft-autosave";
 
 type PromptSummary = {
   id: string;
@@ -92,6 +98,18 @@ function WriteWizard() {
   /** Bumped by "Try again" so the fetch effect re-runs. */
   const [reloadNonce, setReloadNonce] = useState(0);
   const timer = useWritingTimer();
+  const { data: session } = useSession();
+  const userId = session?.user?.id ?? null;
+
+  const draft = useDraftAutosave({
+    userId,
+    promptId: selectedPromptId,
+    content,
+    elapsedSeconds: timer.elapsedSeconds,
+    // Text past the submittable limit cannot be sent anyway, so storing it would only
+    // spend the storage quota on something unusable.
+    enabled: content.length <= MAX_ESSAY_CHARS,
+  });
 
   useEffect(() => {
     fetch("/api/quota")
@@ -182,6 +200,9 @@ function WriteWizard() {
   function selectTask(id: string) {
     if (isSubmitting) return;
     if (id === selectedPromptId) return;
+    // Flush BEFORE the reset, or switching away from a task discards its draft
+    // instead of saving it.
+    draft.save();
     cleanUrlIfDiverged();
     resetAttempt();
     setSelectedPromptId(id);
@@ -190,6 +211,7 @@ function WriteWizard() {
   function selectLevel(next: Level) {
     if (isSubmitting) return;
     if (next === level) return;
+    draft.save();
     cleanUrlIfDiverged();
     resetAttempt();
     setLevel(next);
@@ -202,6 +224,7 @@ function WriteWizard() {
   function selectInstitute(next: Institute) {
     if (isSubmitting) return;
     if (next === institute) return;
+    draft.save();
     cleanUrlIfDiverged();
     resetAttempt();
     setInstitute(next);
@@ -258,6 +281,8 @@ function WriteWizard() {
       // Cleared only once the attempt is genuinely finished, so every retry in
       // between reuses the same id.
       submissionId.current = null;
+      // The attempt is genuinely finished, so the draft has nothing left to protect.
+      draft.clear();
       router.push(`/essays/${data.id}`);
     } catch (error) {
       // Network failure or an aborted request never reaches the response checks above.
@@ -466,6 +491,22 @@ function WriteWizard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
+            {draft.offered && (
+              <DraftNotice
+                draft={draft.offered}
+                onRestore={() => {
+                  const saved = draft.offered!;
+                  setContent(saved.content);
+                  // Restores the clock too, but leaves it stopped: it starts again on
+                  // the next keystroke, same as a fresh attempt.
+                  timer.reset(saved.elapsedSeconds);
+                  if (!submissionId.current) submissionId.current = crypto.randomUUID();
+                  draft.discard();
+                }}
+                onDiscard={draft.discard}
+              />
+            )}
+
             {/*
               readOnly rather than disabled while the evaluation runs: text typed
               during the call used to be silently dropped from the submission, but a
@@ -500,6 +541,7 @@ function WriteWizard() {
                     isRunning={timer.isRunning}
                   />
                 )}
+                <DraftStatusLine status={draft.status} />
               </div>
               <Button
                 onClick={handleSubmit}
