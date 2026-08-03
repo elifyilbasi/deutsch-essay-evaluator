@@ -15,11 +15,26 @@ function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
+/**
+ * A configured whole number, or null where the variable is absent or unusable.
+ *
+ * The emptiness check is the point. `Number("")` and `Number(" ")` are both `0`, not
+ * NaN, so a variable that exists but was never filled in used to parse as a real
+ * limit of zero — and zero means "refuse everything" for both of these settings. An
+ * unfilled DAILY_EVAL_LIMIT switched the product off for every user, and the empty
+ * GLOBAL_DAILY_EVAL_LIMIT shipped in .env.example made a fresh clone refuse its very
+ * first submission. Absent and zero have to be different answers here.
+ */
+export function readLimitEnv(raw: string | undefined): number | null {
+  if (typeof raw !== "string" || raw.trim() === "") return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
 function getDailyEvalLimit(): number {
-  const parsed = Number(process.env.DAILY_EVAL_LIMIT);
-  // `>= 0`, not `> 0`: DAILY_EVAL_LIMIT="0" used to fall through to the default of
-  // five, so the one setting that means "switch evaluations off" switched them on.
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : 5;
+  // An explicit "0" is honoured — it is the documented way to switch evaluations off.
+  // Anything unset or unparseable falls back to the default rather than to zero.
+  return readLimitEnv(process.env.DAILY_EVAL_LIMIT) ?? 5;
 }
 
 /**
@@ -28,8 +43,7 @@ function getDailyEvalLimit(): number {
  * actually protects the shared key. Unset means no ceiling.
  */
 function getGlobalDailyLimit(): number | null {
-  const parsed = Number(process.env.GLOBAL_DAILY_EVAL_LIMIT);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+  return readLimitEnv(process.env.GLOBAL_DAILY_EVAL_LIMIT);
 }
 
 export type UsageToday = { limit: number; used: number; remaining: number };
