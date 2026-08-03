@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InstituteLevelBadge, ScoreBadge, StatusBadge } from "@/components/essay-badges";
 import { DeleteEssayButton } from "@/components/delete-essay-button";
+import { ProgressSummary } from "@/components/progress-summary";
+import { progressByLevel } from "@/lib/progress";
+
+/** Enough history to see a trend without an unbounded query as attempts pile up. */
+const RECENT_LIMIT = 50;
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -13,6 +18,7 @@ export default async function DashboardPage() {
   const essays = await prisma.essay.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    take: RECENT_LIMIT,
     select: {
       id: true,
       institute: true,
@@ -21,9 +27,13 @@ export default async function DashboardPage() {
       status: true,
       createdAt: true,
       prompt: { select: { title: true } },
-      evaluation: { select: { overallScore: true, maxScore: true } },
+      evaluation: {
+        select: { overallScore: true, maxScore: true, zeroedReason: true },
+      },
     },
   });
+
+  const progress = progressByLevel(essays);
 
   return (
     <div className="space-y-6">
@@ -31,6 +41,8 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold">Your essays</h1>
         <Button nativeButton={false} render={<Link href="/write">Write new essay</Link>} />
       </div>
+
+      <ProgressSummary progress={progress} />
 
       {essays.length === 0 ? (
         <Card>
