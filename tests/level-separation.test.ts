@@ -28,8 +28,8 @@ const rules = (r: LevelRubric) =>
 
 describe("rubric lookup", () => {
   it("never falls back to another level or institute", () => {
-    assert.equal(getRubric("TELC", "B2"), undefined);
     assert.equal(getRubric("GOETHE", "B1"), undefined);
+    assert.equal(getRubric("GOETHE", "B2"), undefined, "Goethe must not borrow telc's B2");
     assert.equal(getRubric("GOETHE", "A1"), undefined, "Goethe must not borrow telc's A1");
   });
 

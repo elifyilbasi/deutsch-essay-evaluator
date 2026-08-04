@@ -1,6 +1,15 @@
 import type { Institute, Level } from "@/generated/prisma/client";
 
-export type BandLetter = "A" | "B" | "C" | "D";
+/**
+ * "A*" is telc B2's band for a performance above the target level: "In den beiden ersten
+ * Kriterien kann auch die Bewertung A* vergeben werden, wenn die Leistung der/des
+ * Teilnehmenden oberhalb des Niveaus B2 anzusiedeln ist." It is worth the same 5 points
+ * as A, so it changes no score — it is a diagnostic the learner is entitled to see, and
+ * dropping it would make the rubric disagree with the paper it is transcribed from.
+ *
+ * Levels declare which letters they use, so A* is offered only where a grid defines it.
+ */
+export type BandLetter = "A*" | "A" | "B" | "C" | "D";
 
 /** How thoroughly one Leitpunkt / Inhaltspunkt was treated. */
 export type LeitpunktStatus = "ADDRESSED" | "PARTIAL" | "MISSING";
@@ -51,10 +60,40 @@ export type CriterionDefinition = {
   zeroesWholeTask?: boolean;
 };
 
+/**
+ * A level where the candidate may substitute content of their own for some of the
+ * printed Leitpunkte. telc B2 marks "die Berücksichtigung von mindestens zwei
+ * Leitpunkten und gegebenenfalls weiterer inhaltlicher Aspekte", and its papers say so
+ * outright: "entweder a) mindestens drei der folgenden Punkte oder b) mindestens zwei
+ * der folgenden Punkte und einen weiteren Aspekt Ihrer Wahl."
+ *
+ * Without this, a candidate who legitimately takes option (b) reads as having MISSED two
+ * Leitpunkte — the coverage list would show two gaps that the grid does not penalise.
+ * Distinct from telc A2's `counted`, which picks the best N of the printed points and
+ * has no notion of content the candidate brought themselves.
+ */
+export type SelfChosenAspects = {
+  /** How many of the printed Leitpunkte must be treated regardless. */
+  minLeitpunkte: number;
+  /**
+   * How many treated points the level expects in total, printed or self-chosen. Below
+   * this the coverage is short whichever way the candidate made it up.
+   */
+  expectedTotal: number;
+  /** The level's own wording, for the prompt and the examiner-facing description. */
+  guidance: string;
+};
+
 export type LevelRubric = {
   level: Level;
   minWords: number;
-  maxWords: number;
+  /**
+   * Null where the level sets a floor and no ceiling — telc B2 says only "Schreiben Sie
+   * mindestens 150 Wörter". Load-bearing rather than cosmetic: `checkEssayLength`
+   * refuses a submission past `maxWords` x tolerance, so inventing a ceiling here would
+   * reject legitimate long letters. `MAX_ESSAY_CHARS` stays the real defence.
+   */
+  maxWords: number | null;
   /** Time allowed for this task in the real exam, in minutes. */
   timeLimitMinutes: number;
   criteria: CriterionDefinition[];
@@ -71,6 +110,8 @@ export type LevelRubric = {
   scaleNote: string;
   /** Set where the institute marks each Inhaltspunkt separately (telc A1). */
   contentPointScoring?: ContentPointScoring;
+  /** Set where the candidate may bring aspects of their own (telc B2). */
+  selfChosenAspects?: SelfChosenAspects;
   /**
    * What the three coverage statuses mean at this level, in the institute's own
    * terms. Levels differ sharply here — telc B1 counts a Leitpunkt as erfüllt on a

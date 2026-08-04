@@ -38,6 +38,11 @@ export function checkEssayLength(
   if (content.length > MAX_ESSAY_CHARS) {
     return `Your text is ${content.length} characters. The maximum is ${MAX_ESSAY_CHARS}.`;
   }
+  // A level may set a floor and no ceiling — telc B2 asks only for "mindestens 150
+  // Wörter". There is then no word limit to enforce, and MAX_ESSAY_CHARS above remains
+  // the actual defence. Multiplying a null by the tolerance would have made the limit 0
+  // and refused every B2 submission.
+  if (rubric.maxWords === null) return null;
   const maxWords = rubric.maxWords * WORD_TOLERANCE;
   if (wordCount > maxWords) {
     return `Your text is ${wordCount} words. For this level the maximum accepted is ${maxWords}.`;

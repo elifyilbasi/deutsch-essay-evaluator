@@ -14,6 +14,13 @@ const LEITPUNKTE: Record<string, string[]> = {
   A1: ["Ihr Anliegen", "Eine Frage", "Eine Bitte"],
   A2: ["Reaktion auf die Einladung", "Ein Vorschlag", "Eine Frage", "Ein Termin"],
   B1: ["Ihre Neuigkeiten", "Ein Vorschlag", "Eine Frage", "Ein Treffen"],
+  // B2 prints four and asks for three, one of which may be the candidate's own.
+  B2: [
+    "Grund für Ihre Unzufriedenheit",
+    "Wie Sie auf das Angebot aufmerksam wurden",
+    "Ihre bisherigen Erfahrungen",
+    "Was Sie jetzt von der Firma erwarten",
+  ],
 };
 
 /** Stimulus text only where the level's task is a reply to an incoming message. */
@@ -24,6 +31,9 @@ const STIMULUS: Record<string, { text: string; author: string } | null> = {
     author: "Jana",
     text: "Liebe(r) ...,\n\nlange nichts gehört! Bei mir hat sich einiges getan.\n\nLiebe Grüße\nJana",
   },
+  // B2 reacts to a printed advertisement rather than to a letter, so there is no
+  // correspondent and no name to open with.
+  B2: null,
 };
 
 export const rubricsUnderTest = Object.entries(telcRubrics) as [string, LevelRubric][];
@@ -50,8 +60,9 @@ export function representativeTask(rubric: LevelRubric): TaskContext {
     stimulusAuthor: stimulus?.author ?? null,
     instructions: "Antworten Sie auf die Nachricht.",
     leitpunkte,
-    register: rubric.level === "A1" ? "SIE" : "DU",
-    requiresSubject: false,
+    // B2 is a formal letter to a firm and asks for a Betreffzeile outright.
+    register: rubric.level === "A1" || rubric.level === "B2" ? "SIE" : "DU",
+    requiresSubject: rubric.level === "B2",
     rubric,
     essay: "Beispieltext der Teilnehmerin.",
     wordCount: rubric.minWords,

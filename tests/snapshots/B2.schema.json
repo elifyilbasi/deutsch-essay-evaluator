@@ -1,0 +1,114 @@
+{
+  "type": "OBJECT",
+  "properties": {
+    "themaVerfehlt": {
+      "type": "BOOLEAN",
+      "description": "True only if the text misses the topic entirely (Thema verfehlt) - i.e. it is not a response to this task at all. At this level it carries no automatic penalty; it is recorded, not scored."
+    },
+    "leitpunktCoverage": {
+      "type": "ARRAY",
+      "description": "One entry per Leitpunkt of the task, in the same order they were given, judged independently. THEN, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one entry for it with selfChosen=true. Die Aufgabe verlangt entweder mindestens drei der vorgegebenen Punkte oder mindestens zwei der vorgegebenen Punkte und einen weiteren Aspekt eigener Wahl. Ein selbst gewählter Aspekt zählt dabei so viel wie ein vorgegebener Leitpunkt.",
+      "items": {
+        "type": "OBJECT",
+        "properties": {
+          "leitpunkt": {
+            "type": "STRING",
+            "description": "The Leitpunkt being judged, copied verbatim from the task — or, for a self-chosen aspect, a short German noun phrase naming the aspect the candidate raised."
+          },
+          "selfChosen": {
+            "type": "BOOLEAN",
+            "description": "True only for an aspect the candidate chose themselves, which is not printed on the task. False or omitted for every printed Leitpunkt."
+          },
+          "status": {
+            "type": "STRING",
+            "enum": [
+              "ADDRESSED",
+              "PARTIAL",
+              "MISSING"
+            ],
+            "description": "ADDRESSED = \"Der Leitpunkt ist ausgeführt, nicht nur genannt: die Behandlung erfordert mehr als ein Satzgefüge. Der Punkt ist inhaltlich entwickelt, dem Schreibanlass angemessen und im Register des Briefes behandelt.\". PARTIAL = \"Der Leitpunkt wird nur gestreift — in einem einzigen Satzgefüge abgehandelt, bloß erwähnt oder inhaltlich nicht entwickelt. Auf diesem Niveau genügt ein einzelner kurzer Satz nicht.\". MISSING = \"Der Leitpunkt wird gar nicht behandelt.\"."
+          },
+          "comment": {
+            "type": "STRING",
+            "description": "One sentence in English explaining the judgement, quoting the relevant part of the essay where helpful."
+          }
+        },
+        "required": [
+          "leitpunkt",
+          "status",
+          "comment"
+        ]
+      }
+    },
+    "criteriaVerdicts": {
+      "type": "ARRAY",
+      "description": "One entry per evaluation criterion, using the criterion keys given in the prompt. Choose the single band whose descriptor best fits; do not invent intermediate grades.",
+      "items": {
+        "type": "OBJECT",
+        "properties": {
+          "key": {
+            "type": "STRING",
+            "description": "The criterion key exactly as given in the prompt."
+          },
+          "band": {
+            "type": "STRING",
+            "enum": [
+              "A*",
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "description": "The band whose descriptor best matches the letter."
+          },
+          "comment": {
+            "type": "STRING",
+            "description": "1-3 sentences in English justifying this band, referring to the band descriptor."
+          }
+        },
+        "required": [
+          "key",
+          "band",
+          "comment"
+        ]
+      }
+    },
+    "corrections": {
+      "type": "ARRAY",
+      "description": "Grammar, spelling, and word-choice corrections found in the essay, in the order they appear.",
+      "items": {
+        "type": "OBJECT",
+        "properties": {
+          "original": {
+            "type": "STRING",
+            "description": "The erroneous phrase or sentence, in German, exactly as written."
+          },
+          "corrected": {
+            "type": "STRING",
+            "description": "The corrected version, in German."
+          },
+          "explanation": {
+            "type": "STRING",
+            "description": "Brief explanation of the error, in English."
+          }
+        },
+        "required": [
+          "original",
+          "corrected",
+          "explanation"
+        ]
+      }
+    },
+    "summaryFeedback": {
+      "type": "STRING",
+      "description": "3-5 sentences of overall prose feedback in English: strengths, main weaknesses, and one or two concrete tips to improve."
+    }
+  },
+  "required": [
+    "themaVerfehlt",
+    "leitpunktCoverage",
+    "criteriaVerdicts",
+    "corrections",
+    "summaryFeedback"
+  ]
+}

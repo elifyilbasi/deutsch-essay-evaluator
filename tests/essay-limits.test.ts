@@ -39,25 +39,37 @@ describe("character cap", () => {
 describe("word tolerance", () => {
   const essay = (words: number) => Array.from({ length: words }, () => "Wort").join(" ");
 
+  /**
+   * A level's word ceiling, insisting it has one. Levels may set a floor and no ceiling
+   * (telc B2), so this fails loudly rather than quietly reading null as zero if a level
+   * used below ever loses its maximum.
+   */
+  const cap = (rubric: { level: string; maxWords: number | null }) => {
+    if (rubric.maxWords === null) {
+      throw new Error(`${rubric.level} has no maxWords; this test needs a level that does`);
+    }
+    return rubric.maxWords;
+  };
+
   it("accepts a normal B1 essay of about 100 words", () => {
     const text = essay(100);
     assert.equal(checkEssayLength(text, B1, countWords(text)), null);
   });
 
   it("accepts overshoot, which telc does not penalise", () => {
-    const text = essay(B1.maxWords + 20);
+    const text = essay(cap(B1) + 20);
     assert.equal(checkEssayLength(text, B1, countWords(text)), null);
   });
 
   it("rejects beyond the tolerance", () => {
-    const over = B1.maxWords * WORD_TOLERANCE + 1;
+    const over = cap(B1) * WORD_TOLERANCE + 1;
     const text = essay(over);
     assert.ok(checkEssayLength(text, B1, countWords(text)));
   });
 
   it("scales the tolerance with the level", () => {
     // A1 expects far shorter texts, so its ceiling is correspondingly lower.
-    const text = essay(A1.maxWords * WORD_TOLERANCE + 1);
+    const text = essay(cap(A1) * WORD_TOLERANCE + 1);
     assert.ok(checkEssayLength(text, A1, countWords(text)));
     assert.equal(checkEssayLength(text, B1, countWords(text)), null);
   });

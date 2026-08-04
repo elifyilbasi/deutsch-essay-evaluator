@@ -1,4 +1,4 @@
-import type { Band, LevelRubric, RubricLookup } from "./types";
+import type { Band, BandLetter, LevelRubric, RubricLookup } from "./types";
 
 /**
  * telc writing rubrics, expressed as data so new levels/institutes only require
@@ -219,4 +219,121 @@ const A1: LevelRubric = {
     "This is telc Deutsch A1 (Start Deutsch 1), Schreiben Teil 2: a short message of one to two sentences per Inhaltspunkt, usually to an institution. Almost the whole mark is content — each Inhaltspunkt is worth 3 of the 10 points and is marked on its own, so settle those judgements first and weigh nothing else into them. Award full marks for a point that is dealt with and understandable at A1; a beginner's grammar and spelling are not in themselves a reason to withhold them. Only kommunikative Gestaltung is left over, and it is worth a single point.",
 };
 
-export const telcRubrics: RubricLookup = { A1, A2, B1 };
+/**
+ * telc Deutsch B2, Schriftlicher Ausdruck (Brief) — transcribed from "Modelltest TELC
+ * Deutsch B2", Margarete Rodi, (c) Klett-Langenscheidt GmbH, München, 2013, pp. 38-39
+ * "Bewertungskriterien - Schriftlicher Ausdruck (Brief)"; task and timing from pp. 20-22.
+ * A local transcription with the verbatim wording sits in
+ * exam-materials/telc/b2/BEWERTUNGSKRITERIEN.md.
+ *
+ * "Die Höchstpunktzahl für diesen Prüfungsteil beträgt 45 Punkte. Bei einer
+ * Gesamtpunktzahl von 300 Punkten entspricht dies einer Gewichtung von 15 %." Three
+ * criteria in A/B/C/D worth 5/3/1/0, "die Gesamtpunktzahl wird am Ende mit 3
+ * multipliziert" — the same arithmetic as B1, which is where the resemblance stops.
+ *
+ * Provenance caveat: this is a publisher's Modelltest reproducing telc's grid, not a
+ * telc-published Übungstest. telc gGmbH's own deck (Ellen Handke, "Bewertung des
+ * Schriftlichen Ausdrucks: telc Deutsch B1 und telc Deutsch B2") names the same three
+ * criteria and confirms A* — but calls Kriterium 1 "Behandlung/Berücksichtigung der
+ * Leitpunkte" where the 2013 Modelltest prints "Behandlung des Schreibanlasses". Treat a
+ * telc original as authoritative over this if one turns up.
+ *
+ * Four things that are B2's and must not be carried over from B1:
+ *  - Kriterium 1 is holistic, not a count. B1 bands it purely by how many of four
+ *    Leitpunkte are covered; B2 marks "die Wahl von Textsorte und Register" TOGETHER
+ *    with "die Berücksichtigung von mindestens zwei Leitpunkten und gegebenenfalls
+ *    weiterer inhaltlicher Aspekte", on a voll / im Großen und Ganzen / kaum noch /
+ *    nicht ausreichend scale.
+ *  - Two printed Leitpunkte plus an aspect of the candidate's own is full coverage.
+ *  - A Leitpunkt needs more than one sentence ("Behandlung der LP erfordert mehr als ein
+ *    Satzgefüge", telc's deck) — the direct opposite of B1, whose grid counts a Leitpunkt
+ *    as erfüllt on a single short one.
+ *  - There is NO "Thema verfehlt" override and no criterion that zeroes the task. B1
+ *    states its override outright; a full-text search of the B2 paper finds neither, and
+ *    the type's own rule is not to declare one without a citation.
+ *
+ * A* is worth the same 5 points as A and is offered on the first two criteria only:
+ * "In den beiden ersten Kriterien kann auch die Bewertung A* vergeben werden."
+ */
+const B2_BAND_POINTS: Record<BandLetter, number> = { "A*": 5, A: 5, B: 3, C: 1, D: 0 };
+
+/** The shared four-way scale both of B2's first two criteria are graded on. */
+const b2AngemessenheitBands = (aboveLevel: string): Band[] => [
+  { band: "A*", points: B2_BAND_POINTS["A*"], descriptor: aboveLevel },
+  { band: "A", points: B2_BAND_POINTS.A, descriptor: "voll angemessen" },
+  { band: "B", points: B2_BAND_POINTS.B, descriptor: "im Großen und Ganzen angemessen" },
+  { band: "C", points: B2_BAND_POINTS.C, descriptor: "kaum noch akzeptabel" },
+  { band: "D", points: B2_BAND_POINTS.D, descriptor: "insgesamt nicht ausreichend" },
+];
+
+const B2: LevelRubric = {
+  level: "B2",
+  minWords: 150,
+  // "Schreiben Sie mindestens 150 Wörter." A floor with no ceiling printed anywhere.
+  maxWords: null,
+  // "Sie haben 30 Minuten Zeit, den Brief zu schreiben."
+  timeLimitMinutes: 30,
+  scoreMultiplier: 3,
+  verified: true,
+  themaVerfehltZeroesTask: false,
+  scaleLabel: "Schriftlicher Ausdruck",
+  scaleNote:
+    "Der Schriftliche Ausdruck zählt 45 Punkte, das sind 15 % der Gesamtpunktzahl von 300. Bestehen wird bei telc über die gesamte schriftliche Prüfung gerechnet (60 %), nicht über diesen Teil allein.",
+  selfChosenAspects: {
+    minLeitpunkte: 2,
+    expectedTotal: 3,
+    guidance:
+      "Die Aufgabe verlangt entweder mindestens drei der vorgegebenen Punkte oder mindestens zwei der vorgegebenen Punkte und einen weiteren Aspekt eigener Wahl. Ein selbst gewählter Aspekt zählt dabei so viel wie ein vorgegebener Leitpunkt.",
+  },
+  // B2 asks for a treated Leitpunkt to be developed, not merely mentioned: telc's own
+  // examiner training states "Behandlung der LP erfordert mehr als ein Satzgefüge".
+  // Stating it here matters because the generic fallback is B1-ish and far too lenient.
+  leitpunktStatusGuidance: {
+    ADDRESSED:
+      "Der Leitpunkt ist ausgeführt, nicht nur genannt: die Behandlung erfordert mehr als ein Satzgefüge. Der Punkt ist inhaltlich entwickelt, dem Schreibanlass angemessen und im Register des Briefes behandelt.",
+    PARTIAL:
+      "Der Leitpunkt wird nur gestreift — in einem einzigen Satzgefüge abgehandelt, bloß erwähnt oder inhaltlich nicht entwickelt. Auf diesem Niveau genügt ein einzelner kurzer Satz nicht.",
+    MISSING: "Der Leitpunkt wird gar nicht behandelt.",
+  },
+  criteria: [
+    {
+      key: "schreibanlass",
+      label: "Kriterium 1: Behandlung des Schreibanlasses",
+      description:
+        "Judge two things together, as the grid does: (1) die Wahl von Textsorte und Register — this is a formal letter, so Absender, Anschrift, Datum, Betreffzeile, Anrede and Schlussformel belong to it and the Sie-register must hold throughout; and (2) die Berücksichtigung von mindestens zwei Leitpunkten und gegebenenfalls weiterer inhaltlicher Aspekte. Do NOT band this by counting printed Leitpunkte the way telc B1 does — the task explicitly allows two printed points plus a self-chosen aspect, and a candidate who took that option has covered the task in full. A point counts as treated only if it is developed beyond a single Satzgefüge.",
+      bands: b2AngemessenheitBands(
+        "Die Behandlung des Schreibanlasses liegt oberhalb des Zielniveaus B2.",
+      ),
+    },
+    {
+      key: "kommunikativeGestaltung",
+      label: "Kriterium 2: Kommunikative Gestaltung",
+      description:
+        "Judge the four things the grid names: die Textorganisation, die Verknüpfung der Sätze/Äußerungseinheiten, die sprachliche Vielfalt und die Registertreue. At B2 expect a letter that is planned rather than a list — a fitting Einleitung, a sensible order of the points, and a Schluss — with connectives that bind the utterances into one text, vocabulary with genuine range, and a formal register that never wavers.",
+      bands: b2AngemessenheitBands(
+        "Die kommunikative Gestaltung liegt oberhalb des Zielniveaus B2.",
+      ),
+    },
+    {
+      key: "formaleRichtigkeit",
+      label: "Kriterium 3: Formale Richtigkeit",
+      description:
+        "Bewertet werden Syntax, Morphologie und Orthographie. Weigh errors by whether they endanger die Verwirklichung der Schreibabsicht, and note that the bands turn on how many readings the text costs: B2 tolerates fewer comprehension-impeding errors than B1 does. There is no A* on this criterion.",
+      // No A* here: the paper offers it "in den beiden ersten Kriterien" only.
+      bands: (["A", "B", "C", "D"] as const).map((band) => ({
+        band,
+        points: B2_BAND_POINTS[band],
+        descriptor: {
+          A: "keine oder nur vereinzelte Fehler, die die Verwirklichung der Schreibabsicht aber nicht gefährden",
+          B: "wenige Fehler, die bei einmaligem Lesen die Verwirklichung der Schreibabsicht nicht gefährden",
+          C: "Fehler, die mehrmaliges Lesen erforderlich machen und so die Verwirklichung der Schreibabsicht deutlich gefährden",
+          D: "so viele Fehler, dass die Schreibabsicht nicht verwirklicht wird",
+        }[band],
+      })),
+    },
+  ],
+  guidance:
+    "This is a telc Deutsch B2 Schriftlicher Ausdruck: a formal letter — a Beschwerde, an Anfrage or a Bewerbung — written in 30 minutes in response to a printed advertisement, of at least 150 words with no upper limit. Grade each criterion by choosing the band whose descriptor best fits, exactly as a telc examiner would, and do not invent intermediate grades. The three criteria are independent: a D on one leaves the others untouched, and at this level there is no Thema-verfehlt rule that zeroes the letter. Kriterium 1 is a single holistic judgement about Textsorte, Register and content coverage together — it is not a count of Leitpunkte. Award A* on Kriterium 1 or 2 only where the writing is genuinely above B2; it earns the same points as A and records that the candidate has outgrown the level.",
+};
+
+export const telcRubrics: RubricLookup = { A1, A2, B1, B2 };

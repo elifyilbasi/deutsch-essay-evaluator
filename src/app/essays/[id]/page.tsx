@@ -171,6 +171,7 @@ export default async function EssayDetailPage({
             <CardContent>
               <LeitpunktCoverageList
                 coverage={evaluation.leitpunktCoverage as unknown as LeitpunktCoverage[]}
+                expectedTotal={rubric?.selfChosenAspects?.expectedTotal}
               />
             </CardContent>
           </Card>

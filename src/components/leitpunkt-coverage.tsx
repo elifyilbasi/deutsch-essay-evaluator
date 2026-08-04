@@ -22,17 +22,35 @@ const STATUS_STYLES = {
   },
 } as const;
 
-export function LeitpunktCoverageList({ coverage }: { coverage: LeitpunktCoverage[] }) {
+export function LeitpunktCoverageList({
+  coverage,
+  /**
+   * How many treated points the level actually asks for, where that is fewer than the
+   * number printed. telc B2 wants three, and lets one of them be an aspect of the
+   * candidate's own — so a correct letter can leave two printed Punkte untouched, and
+   * "2 of 5 fully covered" would report a pass as a failure.
+   */
+  expectedTotal,
+}: {
+  coverage: LeitpunktCoverage[];
+  expectedTotal?: number;
+}) {
   if (coverage.length === 0) {
     return null;
   }
 
   const covered = coverage.filter((c) => c.status === "ADDRESSED").length;
+  const required = expectedTotal ?? coverage.length;
+  const ownCovered = coverage.filter(
+    (c) => c.selfChosen && c.status === "ADDRESSED",
+  ).length;
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        {covered} of {coverage.length} points fully covered
+        {covered} of {required} required points fully covered
+        {ownCovered > 0 &&
+          ` · ${ownCovered} of them ${ownCovered === 1 ? "an aspect" : "aspects"} of your own`}
       </p>
 
       <ul className="space-y-2">
@@ -47,10 +65,19 @@ export function LeitpunktCoverageList({ coverage }: { coverage: LeitpunktCoverag
                   <Icon className={`mt-0.5 size-4 shrink-0 ${style.iconClass}`} />
                   <span className="text-sm font-medium">{item.leitpunkt}</span>
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${style.badgeClass}`}
-                >
-                  {style.label}
+                <span className="flex shrink-0 items-center gap-2">
+                  {/* Marked so a self-chosen aspect is never read as a task Leitpunkt
+                      the candidate somehow invented. */}
+                  {item.selfChosen && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      Your own aspect
+                    </span>
+                  )}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${style.badgeClass}`}
+                  >
+                    {style.label}
+                  </span>
                 </span>
               </div>
               <p className="mt-1.5 pl-6 text-sm text-muted-foreground">{item.comment}</p>

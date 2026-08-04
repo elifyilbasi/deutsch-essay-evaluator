@@ -50,6 +50,13 @@ exam-materials/**/*.pdf
 exam-materials/**/*.png
 exam-materials/**/*.jpg
 exam-materials/**/*.jpeg
+# Notes taken from those papers are the papers: a transcription of a Bewertungskriterien
+# page reproduces it just as a scan does. The README suggests an INDEX.md per level, and
+# BEWERTUNGSKRITERIEN.md holds the verbatim B2 grid — both stay local. The short band
+# descriptors that a rubric needs to function live in src/lib/rubrics/ instead, as A1,
+# A2 and B1 already do.
+exam-materials/**/*.md
+!exam-materials/README.md
 
 # Personal writing kept alongside the reference material, not project content.
 exam-materials/your-draft-*.txt

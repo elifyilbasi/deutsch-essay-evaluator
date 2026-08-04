@@ -38,6 +38,13 @@ export type LeitpunktCoverage = {
   leitpunkt: string;
   status: LeitpunktStatus;
   comment: string;
+  /**
+   * True for an aspect the candidate brought themselves rather than one printed on the
+   * task. telc B2 lets a letter treat two printed Punkte plus "einen weiteren Aspekt
+   * Ihrer Wahl", so without this the coverage list would report a correct answer as two
+   * missing Leitpunkte. Absent at levels whose rubric declares no `selfChosenAspects`.
+   */
+  selfChosen?: boolean;
 };
 
 /** Raw examiner judgement from the model — no arithmetic, no totals. */
@@ -98,16 +105,27 @@ export function buildResponseSchema(rubric: LevelRubric) {
       },
       leitpunktCoverage: {
         type: Type.ARRAY,
-        description:
-          "One entry per Leitpunkt of the task, in the same order they were given. Judge each one independently.",
+        description: rubric.selfChosenAspects
+          ? `One entry per Leitpunkt of the task, in the same order they were given, judged independently. THEN, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one entry for it with selfChosen=true. ${rubric.selfChosenAspects.guidance}`
+          : "One entry per Leitpunkt of the task, in the same order they were given. Judge each one independently.",
         items: {
           type: Type.OBJECT,
           properties: {
             leitpunkt: {
               type: Type.STRING,
-              description:
-                "The Leitpunkt being judged, copied verbatim from the task.",
+              description: rubric.selfChosenAspects
+                ? "The Leitpunkt being judged, copied verbatim from the task — or, for a self-chosen aspect, a short German noun phrase naming the aspect the candidate raised."
+                : "The Leitpunkt being judged, copied verbatim from the task.",
             },
+            ...(rubric.selfChosenAspects
+              ? {
+                  selfChosen: {
+                    type: Type.BOOLEAN,
+                    description:
+                      "True only for an aspect the candidate chose themselves, which is not printed on the task. False or omitted for every printed Leitpunkt.",
+                  },
+                }
+              : {}),
             status: {
               type: Type.STRING,
               enum: ["ADDRESSED", "PARTIAL", "MISSING"],
@@ -243,6 +261,27 @@ export function buildPrompt(task: TaskContext) {
 `
     : "";
 
+  // Where the candidate may substitute content of their own, saying so is what stops the
+  // model reading a legitimate choice as two missing Leitpunkte and marking it down twice
+  // — once in the coverage list the learner reads, once in Kriterium 1.
+  const selfChosen = rubric.selfChosenAspects;
+  const selfChosenText = selfChosen
+    ? `COVERAGE RULE — the candidate may bring their own content
+   ${selfChosen.guidance}
+   So a letter treating ${selfChosen.minLeitpunkte} of the printed Leitpunkte plus ${
+     selfChosen.expectedTotal - selfChosen.minLeitpunkte
+   } relevant aspect(s) of its own has covered the task IN FULL. Do not treat the printed points it passed over as failures, and do not mark it down for choosing that option — the task offers it.
+   Still judge each printed Leitpunkt on its own and report it, so the learner sees what was and was not taken up; then append any self-chosen aspect with selfChosen=true. Coverage is short only when fewer than ${selfChosen.expectedTotal} points in total, printed and self-chosen together, are properly treated.
+
+`
+    : "";
+
+  // Every letter this rubric actually defines, in grid order, so the step list can never
+  // offer a set that differs from the bands printed above it.
+  const bandLetters = [
+    ...new Set(rubric.criteria.flatMap((c) => c.bands.map((b) => b.band))),
+  ].join(", ");
+
   const criteriaText = rubric.criteria
     .map((c, i) => {
       const bandLines = c.bands
@@ -258,9 +297,15 @@ export function buildPrompt(task: TaskContext) {
 
   const leitpunkteText = leitpunkte.map((p, i) => `${i + 1}. ${p}`).join("\n");
 
+  // Named by what it actually is. A telc B1 task quotes a letter from a person and the
+  // reply is addressed back to them; a B2 task reprints an advertisement, and calling
+  // that "the letter the student is replying to" invents a correspondent — which is
+  // precisely the wrong steer on a criterion that marks Textsorte and Register.
   const stimulusBlock = stimulusText
-    ? `\nINCOMING LETTER THE STUDENT IS REPLYING TO${
-        stimulusAuthor ? ` (written by ${stimulusAuthor})` : ""
+    ? `\n${
+        stimulusAuthor
+          ? `INCOMING LETTER THE STUDENT IS REPLYING TO (written by ${stimulusAuthor})`
+          : "MATERIAL THE STUDENT IS RESPONDING TO (an advertisement or notice, not a letter from a correspondent)"
       }:\n"""\n${stimulusText}\n"""\n`
     : "";
 
@@ -293,13 +338,17 @@ ${leitpunkteText}
 FORMAL REQUIREMENTS:
 - ${registerText}
 - ${subjectText}
-${salutationText ? `- ${salutationText}\n` : ""}- Expected length: ${rubric.minWords}-${rubric.maxWords} words. The student wrote ${wordCount} words.
+${salutationText ? `- ${salutationText}\n` : ""}- Expected length: ${
+    rubric.maxWords === null
+      ? `at least ${rubric.minWords} words, with no upper limit — do not penalise length`
+      : `${rubric.minWords}-${rubric.maxWords} words`
+  }. The student wrote ${wordCount} words.
 
 LEVEL-SPECIFIC GUIDANCE FOR YOU AS EXAMINER:
 ${rubric.guidance}
 
 EVALUATION CRITERIA:
-${contentPointText}${criteriaText}
+${contentPointText}${selfChosenText}${criteriaText}
 
 STUDENT'S ESSAY (German, submitted as-is, do not alter before analysis):
 """
@@ -316,11 +365,25 @@ Work in this order:
     promptStatuses
       ? `Go through the Leitpunkte one at a time, in the order listed above, and give each a status, applying this level's own wording exactly: ADDRESSED = "${promptStatuses.ADDRESSED}", PARTIAL = "${promptStatuses.PARTIAL}", MISSING = "${promptStatuses.MISSING}".`
       : "Go through the Leitpunkte one at a time, in the order listed above, and decide for each whether the essay treats it adequately (ADDRESSED), only touches it (PARTIAL), or omits it (MISSING)."
-  } Return one entry per Leitpunkt, copying its text verbatim. Do not merge or reorder them.
+  } Return one entry per Leitpunkt, copying its text verbatim. Do not merge or reorder them.${
+    selfChosen
+      ? " Then, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one more entry for it with selfChosen=true."
+      : ""
+  }
 3. ${
     contentPoints
       ? "For each criterion listed above, pick the ONE band whose descriptor best fits and return it under that criterion's key. The content marks are NOT a criterion — they come from the statuses you assigned in step 2, so do not return a band for them."
-      : "For each criterion, pick the ONE band (A, B, C or D) whose descriptor best fits, and return it under that criterion's key. For the Leitpunkte criterion, count how many points you marked ADDRESSED and choose the band that matches that count — PARTIAL does not count as adequately treated."
+      : // The band letters are the ones this rubric defines, not a hardcoded A/B/C/D:
+        // spelling out "(A, B, C or D)" told a telc B2 examiner to pick from a set that
+        // excludes A*, contradicting the very bands listed above it in the same prompt.
+        `For each criterion, pick the ONE band (${bandLetters}) whose descriptor best fits, and return it under that criterion's key.${
+          // Counting Leitpunkte is telc B1's rule for its first criterion, and B2's grid
+          // explicitly is not a count — it weighs Textsorte and Register together with
+          // coverage, and lets a self-chosen aspect stand in for a printed point.
+          selfChosen
+            ? " Kriterium 1 is a holistic judgement, NOT a count of Leitpunkte: weigh the choice of Textsorte and Register together with the coverage rule above."
+            : " For the Leitpunkte criterion, count how many points you marked ADDRESSED and choose the band that matches that count — PARTIAL does not count as adequately treated."
+        }`
   }
 4. List concrete grammar, spelling, and word-choice errors as corrections (original -> corrected, each with a short explanation).
 5. Write a brief overall prose feedback summary.

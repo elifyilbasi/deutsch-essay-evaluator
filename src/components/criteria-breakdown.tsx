@@ -5,6 +5,9 @@ const formatPoints = (n: number) =>
   Number.isInteger(n) ? String(n) : n.toLocaleString("de-DE", { maximumFractionDigits: 2 });
 
 const BAND_CLASS: Record<string, string> = {
+  // telc B2's band for a performance above the target level. Worth the same as A, so it
+  // wears the same colour — the distinction it carries is in the letter, not the score.
+  "A*": "bg-success/10 text-success",
   A: "bg-success/10 text-success",
   B: "bg-success/10 text-success",
   C: "bg-warning/10 text-warning",
