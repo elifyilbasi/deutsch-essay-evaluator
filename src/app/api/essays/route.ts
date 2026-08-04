@@ -9,7 +9,7 @@ import {
   checkEssayLength,
   exceedsBodyLimit,
 } from "@/lib/essayLimits";
-import { evaluateEssay } from "@/lib/gemini";
+import { evaluateEssay, isQuotaError } from "@/lib/gemini";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -114,15 +114,18 @@ export async function POST(request: Request) {
 
   const reservation = await reserveEvaluation(session.user.id);
   if (!reservation.ok) {
-    return NextResponse.json(
-      {
-        error:
-          reservation.reason === "global"
-            ? "The shared daily evaluation limit has been reached. Please try again tomorrow."
-            : `You've used all ${reservation.limit} of your evaluations for today. Please try again tomorrow.`,
-      },
-      { status: 429 },
-    );
+    // Different cures, so different messages: wait a minute, wait a day, wait until
+    // the account is a day old, or you have simply used your own five.
+    const message = {
+      burst: "Too many essays are being evaluated right now. Please try again in a minute.",
+      global:
+        "The shared daily evaluation limit has been reached. Please try again tomorrow.",
+      newcomer:
+        "New accounts share a small part of each day's evaluations, and today's part is used up. Your account draws from the full pool once it is a day old.",
+      user: `You've used all ${reservation.limit} of your evaluations for today. Please try again tomorrow.`,
+    }[reservation.reason];
+
+    return NextResponse.json({ error: message }, { status: 429 });
   }
 
   // Written BEFORE the paid call, so a failure afterwards keeps the user's text
@@ -190,10 +193,26 @@ export async function POST(request: Request) {
       wordCount,
     });
   } catch (error) {
-    // The essay stays SUBMITTED and the reservation stands: a failed call still costs
-    // the shared key, so refunding it would make induced failures free. The id goes
-    // back so the client can point the user at their saved text.
     console.error("Gemini evaluation failed", error);
+
+    // The one failure that is refunded. The no-refund rule exists because a failed call
+    // still costs the shared key — which is exactly what a call refused at Google's
+    // quota gate did not do, since it never reached the model. Charging for it would
+    // bill the user for our own rate limits being too generous.
+    if (isQuotaError(error)) {
+      await releaseEvaluation(session.user.id);
+      return NextResponse.json(
+        {
+          error:
+            "We've hit the shared evaluation limit for now. Your text has been saved — please try again in a few minutes.",
+          id: essay.id,
+        },
+        { status: 429 },
+      );
+    }
+
+    // Otherwise the essay stays SUBMITTED and the reservation stands. The id goes back
+    // so the client can point the user at their saved text.
     return NextResponse.json(
       {
         error:

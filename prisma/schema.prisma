@@ -185,6 +185,27 @@ model DailyUsage {
   @@index([day])
 }
 
+/// A counter for one named thing inside one time window: Gemini calls this minute,
+/// registrations from one IP today. Not per user, so it has no relation to User.
+///
+/// The row is reused rather than accumulated — a claim that finds a stale `window`
+/// overwrites it and starts the count at 1, so the rate gate is a single row forever and
+/// nothing needs pruning. Only the per-IP rows accumulate, one per distinct address, and
+/// the register route sweeps yesterday's away as it goes.
+model RateWindow {
+  /// What is being counted, e.g. "gemini" or "register:<hashed ip>".
+  id     String @id
+  /// The window this count belongs to: a UTC minute ("YYYY-MM-DDTHH:MM") for the API
+  /// gate, a UTC day ("YYYY-MM-DD") for registrations. A count is only valid for the
+  /// window recorded here.
+  window String
+  used   Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@index([window])
+}
+
 model Evaluation {
   id      String @id @default(cuid())
   essayId String @unique

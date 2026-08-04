@@ -369,3 +369,209 @@ loudly until it has a fixture rather than being silently untested.
 - A2 remains an invented stand-in reusing the B1 band shape.
 - `leitpunkt-coverage.tsx` shows each point's status but not its mark; for A1 that list
   is where the score actually lives, so showing 3 / 1,5 / 0 per point would help.
+
+---
+
+# Close the global ceiling race
+
+`GLOBAL_DAILY_EVAL_LIMIT` is the setting that actually protects the shared Gemini key:
+registration is open, so the per-user quota only governs how fast one account burns
+through. It was the one limit that could be walked straight past.
+
+## Plan
+
+- [x] Show the race with real concurrent requests before changing anything
+- [x] Make the ceiling claim atomic without splitting the count into a second counter
+- [x] Keep the no-ceiling path exactly as it was
+- [x] Leave a check behind that can be re-run
+
+## The race
+
+The per-user claim has always been one conditional `INSERT … ON CONFLICT DO UPDATE …
+WHERE used < limit`: concurrent writers block on the row lock, re-evaluate the `WHERE`
+against the updated row, and cannot both take the last slot.
+
+The ceiling had no such row. It was a `SUM(used)` across every user's row, read and then
+acted on — the exact check-then-act shape the per-user path was written to avoid. Eight
+concurrent requests against three free slots all read the same under-limit total and all
+claimed:
+
+```
+Global ceiling, 8 users racing for 3 slots
+  FAIL  reservations granted: 8, expected 3
+  FAIL  evaluations charged: 8, expected 3
+  FAIL  refusals blaming the ceiling: 0, expected 5
+```
+
+Five paid model calls past a ceiling whose whole job is to stop them, and the overshoot
+scales with concurrency rather than being capped at one.
+
+Read-committed is what makes it unfixable in the per-user style: an aggregate cannot see
+the uncommitted increments of concurrent transactions on *other* rows, wherever it is
+written — including as a subquery inside the claim statement itself. There is no single
+row for the racers to queue on.
+
+## Review
+
+**`src/lib/rateLimit.ts`** — the day's reservations now serialise on a transaction-scoped
+advisory lock, taken only when a ceiling is configured, with the aggregate and the claim
+inside that transaction. Postgres releases it on commit or rollback, so a refusal cannot
+strand it. The per-user claim moved unchanged into `claimUserSlot`, which takes a client
+so it can run inside the transaction or, when no ceiling is set, directly on `prisma` —
+that path issues no lock and behaves exactly as before.
+
+`SUM(used)` stays the only global count. The alternative, a per-day counter row claimed
+by the same conditional-update trick, was rejected: it duplicates a number the database
+already holds, and claiming two counters needs a compensating decrement when the second
+refuses — a new way for the two to disagree, on the path that already refunds duplicate
+submissions. Nothing had to change in `releaseEvaluation`, `getUsageToday` or the route.
+
+Serialising is honest about what a global ceiling is — a single point of contention. The
+critical section is one indexed aggregate plus one upsert, and submissions arrive at the
+rate of people finishing essays.
+
+**`scripts/check-reservation-concurrency.ts`** + `npm run check:concurrency` — the check
+the comments in `rateLimit.ts` already claimed existed. Both claims rest on database
+semantics no in-process test can show, and `npm test` deliberately runs without a
+database, so it lives outside the suite. It fires real concurrent reservations and
+asserts the *committed* totals land exactly on the limit: the ceiling case, and the
+per-user case as a control that passes before and after. It sets its limits relative to
+the day's existing total, so it works against a database with real rows in it, and
+deletes its throwaway users in a `finally`.
+
+Verified: the ceiling case fails as above on the previous code and passes now, repeatably;
+119 unit tests, `tsc --noEmit` and eslint unchanged; the check leaves no rows behind.
+
+### Open
+
+- The write page shows the per-user quota only. A user refused by the ceiling learns it
+  from a 429 at submit time, after writing.
+- `releaseEvaluation` takes no lock. It only ever decrements, so it cannot push a count
+  past a limit.
+
+---
+
+# Set the ceiling, and stop the key being burned
+
+The API key's Google project has **no billing account** — AI Studio shows "Free tier" and
+offers "Set up billing" rather than naming one. Being charged is therefore structurally
+impossible, and no code here improves on that. What was left was availability: past the
+free tier Google returns 429s, and the app turned those into failed submissions that
+still cost the user a daily slot.
+
+## Plan
+
+- [x] Set the ceiling that the previous change made race-free but left inert
+- [x] Bound the burst, not just the day — free-tier quotas are per-minute too
+- [x] Make a refusal leave no trace, so a burst cannot quietly eat the day
+- [x] Stop charging users for our own throttling
+- [x] Close the account-farming route the per-user quota assumes is shut
+
+## Review
+
+**Configuration** — `GLOBAL_DAILY_EVAL_LIMIT="100"` and `GEMINI_RPM_LIMIT="5"` in `.env`,
+both deliberately conservative starting values. `.env.example` now carries the reasoning:
+keep the ceiling at or under **half** the model's published requests-per-day, because
+this app counts UTC days and Google resets on its own schedule, so the two windows
+overlap and a ceiling of N allows close to 2N inside one of Google's days.
+
+**`RateWindow`** (`prisma/schema.prisma`) — one counter for one named thing in one time
+window. The claim is a single conditional upsert whose `CASE` resets the count when the
+window has rolled over, so the rate gate is **one row forever**: nothing accumulates,
+nothing needs pruning, and concurrent writers serialise on that row exactly as
+`claimUserSlot` does. Only the per-IP registration rows accumulate, and the register
+route sweeps yesterday's as it goes.
+
+**`src/lib/rateLimit.ts`** — three limits now, claimed cheapest and most protective
+first: the minute, then the day across all users, then the user's own quota. A refusal at
+any step throws `ReservationRefused`, which rolls the transaction back and is translated
+into a return value immediately outside it. That is the point of the throw: a request
+turned away for its own quota must not leave a minute of shared capacity spent on
+nothing. The advisory lock stays even though the rate gate's row lock would serialise the
+ceiling by itself — that would rest on an optional setting being switched on.
+
+**`src/app/api/essays/route.ts`** — three refusals, three messages, because the cures
+differ: wait a minute, come back tomorrow, or come back tomorrow having used your own
+five. And one exception to the no-refund-on-failure rule: a Google 429, detected by
+`isQuotaError` in `gemini.ts`. That rule exists because a failed call still costs the
+shared key — which is exactly what a call refused at Google's gate did *not* do, since it
+never reached the model. Charging for it would bill the user for our own limits being too
+generous.
+
+**`src/app/api/register/route.ts`** — the per-user quota assumes accounts cost something
+to make, and they did not. Email is normalised before the uniqueness check, so
+`a@b.com` and `A@b.com` are one account rather than two quotas (the unique index is
+case-sensitive; `auth.ts` normalises the sign-in lookup to match). Registrations are
+throttled per client IP per day, keyed by a **hash** of the address rather than the
+address — this table has no business holding personal data. The housekeeping sweep is
+wrapped: it runs after the account exists, so a failure there would report a registration
+as failed when it had succeeded.
+
+**The new-account share** (`NEW_ACCOUNT_DAILY_LIMIT="20"`) — the answer to the farming
+question, and the only control here that bounds the *payoff* rather than raising the
+*price*. Every account younger than 24 hours shares one daily allowance, so however many
+are minted they draw from that one number and the remaining 80 stay for people who were
+here yesterday. A farmed account is always a new account; that is the whole idea.
+
+Deliberately an absolute number rather than a percentage of the ceiling: easier to reason
+about, and it still works when no ceiling is configured. Checked under the same advisory
+lock as the ceiling, since it is another sum across rows other requests are writing.
+
+Two corrections to the first version of the rule, both about it being wasteful rather
+than wrong:
+
+- **It refused newcomers while the day sat idle.** The allowance was enforced against a
+  pool with no reference to how busy the day actually was, so the 21st new account was
+  turned away with 75 of 100 evaluations unused. It now only bites once the day passes
+  half the ceiling (`CEILING_PRESSURE_PERCENT`). Below that line nothing is contended, so
+  refusing a real person protects nobody and loses them. With no ceiling configured there
+  is no sense of "busy", so the allowance always applies.
+- **A handful of accounts drank the whole pool.** First-come-first-served at five each
+  meant four accounts emptied a pool of twenty before anyone in another timezone woke up.
+  `FIRST_DAY_EVAL_LIMIT="2"` replaces the ordinary quota while an account is new, so the
+  same pool now reaches at least ten newcomers and draining it costs ten accounts rather
+  than four. Fairness and resistance improved together; the price is that a genuine new
+  user writes two essays on day one and five from tomorrow.
+
+Account age is resolved once per reservation (`resolveAccount`) because both rules need
+it, and the aggregate is only run for a new account on a contended day — everyone else
+spends a primary-key lookup and moves on.
+
+Not done, and the honest limits of all of the above: a proxy pool defeats the IP
+throttle, and *patience* defeats the share — accounts registered today are established
+tomorrow, which is inherent to any age-based rule. The aim is that farming stops paying
+off inside a session, not that it becomes impossible. Making accounts genuinely expensive
+needs an identity anchor the app does not have: Google sign-in (Auth.js is already wired
+to Prisma, so the provider is a small change) or `emailVerified` gating, which needs an
+email sender.
+
+### Verified
+
+`npm run check:concurrency` grew from two cases to eight, all passing repeatably: the
+ceiling, the per-user limit, the rate gate, window rollover, the new-account share, the
+pressure line, the first-day quota, and "a refusal leaves no trace". The share case checks
+both halves of the claim — eight fresh accounts racing take exactly the allowance and no
+more, a ninth is refused, and an account registered three days ago is not restricted by
+it at all. The pressure case checks the same request being granted below the line and
+refused above it, with an empty pool in both. Two of them were wrong before they were right — the rate-gate case failed on a
+second run inside the same minute, which was the check being unisolated rather than the
+gate being broken, so it now measures relative to what the live minute has spent, the way
+the ceiling case already did.
+
+Registration was exercised over HTTP against the dev server: mixed-case address stored
+normalised, the lowercase variant correctly refused as a duplicate, malformed address and
+malformed body each refused, and the 11th account from one IP refused while the first ten
+succeeded. 119 unit tests, `tsc --noEmit` and eslint all clean; the checks leave no rows
+behind.
+
+### Open
+
+- **The dev server needs restarting** to pick up the new environment variables and the
+  regenerated Prisma client. A server started before this change holds a client with no
+  `RateWindow` model.
+- The refusal messages were not seen in the browser: reaching them needs a signed-in
+  session and an environment change on the running server. The mapping is a static lookup
+  in the route; the underlying refusals are covered by the concurrency check.
+- `GLOBAL_DAILY_EVAL_LIMIT="100"` and `GEMINI_RPM_LIMIT="5"` are guesses on the safe side
+  until the real free-tier numbers for `gemini-flash-latest` are read out of AI Studio.
+  They must also be set in the Vercel project, or production stays uncapped.

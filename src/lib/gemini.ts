@@ -378,6 +378,27 @@ function buildResultLabel(params: {
   return `${level} — ${total}/${maxTotal} (${descriptor})`;
 }
 
+/**
+ * Whether a failed call was refused by Google's quota rather than answered badly.
+ *
+ * The two deserve opposite treatment. A call that reached the model costs the shared key
+ * even when it fails, which is why failures are not normally refunded — but a call
+ * refused at the gate never reached it and cost nothing, so the user's slot goes back.
+ *
+ * Matched on the status rather than with `instanceof ApiError`, since the SDK also wraps
+ * transport-level failures, and a 429 is a 429 whichever layer raised it.
+ */
+export function isQuotaError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  if ((error as { status?: unknown }).status === 429) {
+    return true;
+  }
+  const message = error instanceof Error ? error.message : "";
+  return /RESOURCE_EXHAUSTED|\b429\b|\bquota\b/i.test(message);
+}
+
 export async function evaluateEssay(task: TaskContext): Promise<{
   result: EvaluationResult;
   verdict: ExaminerVerdict;

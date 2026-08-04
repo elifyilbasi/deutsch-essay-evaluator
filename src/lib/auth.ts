@@ -21,7 +21,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Normalised the same way registration stores it, so the address someone typed
+        // with a capital letter still finds their account.
+        const user = await prisma.user.findUnique({
+          where: { email: email.trim().toLowerCase() },
+        });
         if (!user?.passwordHash) {
           return null;
         }
