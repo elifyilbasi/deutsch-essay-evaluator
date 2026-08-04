@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { Institute, Level, EssayStatus } from "@/generated/prisma/client";
 import { displayStatus } from "@/lib/essayStatus";
+import { isPass, ratioOf } from "@/lib/progress";
 
 export function InstituteLevelBadge({ institute, level }: { institute: Institute; level: Level }) {
   return (
@@ -39,8 +40,9 @@ export function ScoreBadge({
   overallScore: number;
   maxScore: number;
 }) {
-  // 60% is telc's pass threshold across the written exam; used here as a colour cue only.
-  const variant = maxScore > 0 && overallScore / maxScore >= 0.6 ? "default" : "destructive";
+  // Same threshold the progress chart draws its pass line at, so a badge and a bar can
+  // never disagree about whether an essay passed. Colour cue only.
+  const variant = isPass(ratioOf(overallScore, maxScore)) ? "default" : "destructive";
   return (
     <Badge variant={variant}>
       {overallScore}/{maxScore}
