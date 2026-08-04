@@ -34,7 +34,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <NavBar />
-          <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">{children}</main>
+          {/* Kept in step with the nav bar's own max width, so the header and the page
+              beneath it share one left edge. */}
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
           <Toaster />
         </Providers>
       </body>

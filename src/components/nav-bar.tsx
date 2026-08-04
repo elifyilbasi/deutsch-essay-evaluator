@@ -12,7 +12,8 @@ export function NavBar() {
 
   return (
     <header className="border-b">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
+      {/* Matches the main container in layout.tsx — they have to move together. */}
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="font-semibold">
           Deutsch Essay Evaluator
         </Link>

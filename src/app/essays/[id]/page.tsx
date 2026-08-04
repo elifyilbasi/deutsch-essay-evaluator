@@ -37,31 +37,43 @@ export default async function EssayDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{essay.prompt.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{essay.prompt.taskIntro}</p>
+      {/*
+        Title and actions share the top row; the task intro runs full width beneath them.
+        Sitting beside a shrink-0 cluster of badges it was squeezed into a narrow column
+        and wrapped around them, and `items-center` floated the badges into the middle of
+        that wrapped text rather than aligning them with the heading they belong to.
+      */}
+      <div>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <h1 className="min-w-0 text-2xl font-semibold">{essay.prompt.title}</h1>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <InstituteLevelBadge institute={essay.institute} level={essay.level} />
+            {evaluation && (
+              <ScoreBadge
+                overallScore={evaluation.overallScore}
+                maxScore={evaluation.maxScore}
+              />
+            )}
+            {/*
+              Everything the write page needs to land straight on this task is already
+              here on the essay, so no lookup endpoint is required. The wizard rejects
+              anything it would not let you pick by hand.
+
+              `secondary` rather than `outline`: an outline button is `bg-background` with
+              a --border hairline, which on this off-white page is all but invisible and
+              read as plain text next to two solid badges.
+            */}
+            <Link
+              href={`/write?institute=${essay.institute}&level=${essay.level}&promptId=${essay.promptId}`}
+              className={buttonVariants({ variant: "secondary", size: "sm" })}
+            >
+              Practise this task again
+            </Link>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <InstituteLevelBadge institute={essay.institute} level={essay.level} />
-          {evaluation && (
-            <ScoreBadge
-              overallScore={evaluation.overallScore}
-              maxScore={evaluation.maxScore}
-            />
-          )}
-          {/*
-            Everything the write page needs to land straight on this task is already
-            here on the essay, so no lookup endpoint is required. The wizard rejects
-            anything it would not let you pick by hand.
-          */}
-          <Link
-            href={`/write?institute=${essay.institute}&level=${essay.level}&promptId=${essay.promptId}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Practise this task again
-          </Link>
-        </div>
+        <p className="mt-2 max-w-[70ch] text-sm text-muted-foreground">
+          {essay.prompt.taskIntro}
+        </p>
       </div>
 
       {essay.prompt.stimulusText && (
@@ -70,7 +82,10 @@ export default async function EssayDetailPage({
             <CardTitle className="text-base">The letter you replied to</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+            {/* Capped measure: the shell is wide so headers and charts have room, but a
+                line of prose past ~75 characters is measurably harder to read, and this
+                is a letter meant to be read. Same cap on the essay and the feedback. */}
+            <p className="max-w-[70ch] whitespace-pre-wrap text-sm text-muted-foreground">
               {essay.prompt.stimulusText}
             </p>
           </CardContent>
@@ -116,14 +131,16 @@ export default async function EssayDetailPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {evaluation ? (
-            <AnnotatedEssay
-              essay={essay.content}
-              corrections={evaluation.corrections as unknown as Correction[]}
-            />
-          ) : (
-            <p className="whitespace-pre-wrap text-sm">{essay.content}</p>
-          )}
+          <div className="max-w-[70ch]">
+            {evaluation ? (
+              <AnnotatedEssay
+                essay={essay.content}
+                corrections={evaluation.corrections as unknown as Correction[]}
+              />
+            ) : (
+              <p className="whitespace-pre-wrap text-sm">{essay.content}</p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -139,7 +156,7 @@ export default async function EssayDetailPage({
                   Der gesamte Brief wurde mit 0 Punkten bewertet: {evaluation.zeroedReason}.
                 </p>
               )}
-              <p className="text-sm">{evaluation.summaryFeedback}</p>
+              <p className="max-w-[70ch] text-sm">{evaluation.summaryFeedback}</p>
               {/* Per level: the parts, totals and pass rules differ between them. */}
               {rubric && (
                 <p className="text-xs text-muted-foreground">{rubric.scaleNote}</p>
