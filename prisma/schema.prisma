@@ -76,12 +76,14 @@ enum Institute {
   GOETHE
 }
 
+/// The full ladder this product will ever cover. C1 is deliberately absent rather than
+/// carried unused: an enum value nothing can produce still has to be handled at every
+/// exhaustive switch and every lookup that must not silently fall back to it.
 enum Level {
   A1
   A2
   B1
   B2
-  C1
 }
 
 /// Only what cannot be derived. Whether an essay has been evaluated is whether an

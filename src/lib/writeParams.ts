@@ -9,19 +9,24 @@
  */
 
 export type Institute = "TELC" | "GOETHE";
-export type Level = "A1" | "A2" | "B1" | "B2" | "C1";
+export type Level = "A1" | "A2" | "B1" | "B2";
 
 export const INSTITUTES: { value: Institute; label: string; enabled: boolean }[] = [
   { value: "TELC", label: "TELC", enabled: true },
   { value: "GOETHE", label: "Goethe-Institut", enabled: false },
 ];
 
+/**
+ * Ladder order, and the only levels that will ever ship — C1 is deliberately absent
+ * rather than carried as a permanently disabled option. The dashboard's progress grid
+ * reads the enabled entries from here too, so what a learner is shown progress for and
+ * what they can actually write cannot drift apart.
+ */
 export const LEVELS: { value: Level; label: string; enabled: boolean }[] = [
   { value: "A1", label: "A1", enabled: true },
   { value: "A2", label: "A2", enabled: true },
   { value: "B1", label: "B1", enabled: true },
   { value: "B2", label: "B2", enabled: false },
-  { value: "C1", label: "C1", enabled: false },
 ];
 
 export type WriteParams = {

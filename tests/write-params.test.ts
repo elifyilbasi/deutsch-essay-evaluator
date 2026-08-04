@@ -23,9 +23,15 @@ describe("parseWriteParams", () => {
   });
 
   it("rejects a level that is not enabled yet", () => {
-    for (const level of ["B2", "C1"]) {
-      assert.equal(parseWriteParams(params({ ...valid, level })), null, `${level} was accepted`);
-    }
+    assert.equal(parseWriteParams(params({ ...valid, level: "B2" })), null);
+  });
+
+  it("rejects a level that is not on the ladder at all", () => {
+    // C1 was dropped from LEVELS rather than left permanently disabled, so it is now an
+    // unknown value rather than a known-but-off one. Both must be refused, by different
+    // branches: `enabledValue` finds no match here, instead of finding one and failing
+    // its `enabled` check.
+    assert.equal(parseWriteParams(params({ ...valid, level: "C1" })), null);
   });
 
   it("rejects an institute that is not enabled yet", () => {

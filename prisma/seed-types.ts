@@ -7,7 +7,7 @@
  */
 export type SeedPrompt = {
   institute: "TELC" | "GOETHE";
-  level: "A1" | "A2" | "B1" | "B2" | "C1";
+  level: "A1" | "A2" | "B1" | "B2";
   title: string;
   taskIntro: string;
   stimulusText: string | null;
