@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "node --import tsx --test tests/*.test.ts",
     "check:concurrency": "node --import tsx scripts/check-reservation-concurrency.ts",
+    "evaluate": "node --env-file=.env --import tsx scripts/evaluate-essay.ts",
     "test:update": "UPDATE_SNAPSHOTS=1 npm test"
   },
   "dependencies": {
