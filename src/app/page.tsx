@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function Home() {
   const session = await auth();
-  const ctaHref = session?.user ? "/write" : "/register";
+  const ctaHref = session?.user ? "/write" : "/login";
 
   return (
     <div className="space-y-10">

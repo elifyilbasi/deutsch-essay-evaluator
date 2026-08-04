@@ -45,7 +45,10 @@ in `prisma/migrations`, then commit that folder and use `prisma migrate deploy` 
 3. Run `npx prisma migrate deploy` against the production `DATABASE_URL` (locally, or as a
    Vercel build step) before/at first deploy, then `npx prisma db seed` once to load the
    prompt bank.
-4. Deploy. New user registration is open (email + password) at `/register`.
+4. Deploy. Sign-in is Google-only: there is no sign-up step, since the first sign-in
+   creates the account. Add the production callback URL
+   (`https://<your-domain>/api/auth/callback/google`) to the OAuth client, alongside the
+   localhost one.
 
 ## Gemini free tier
 

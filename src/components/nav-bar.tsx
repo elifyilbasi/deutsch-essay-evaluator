@@ -42,13 +42,14 @@ export function NavBar() {
           ) : status === "loading" ? null : (
             <>
               <ThemeToggle />
-              <Link href="/login" className="text-muted-foreground">
-                Log in
-              </Link>
+              {/* One button, not two: with Google there is no separate sign-up step —
+                  the first sign-in creates the account. "Sign in" rather than "Log in"
+                  for exactly that reason: "Log in" tells a first-time visitor they need
+                  an account they do not have yet. */}
               <Button
                 size="sm"
                 nativeButton={false}
-                render={<Link href="/register">Sign up</Link>}
+                render={<Link href="/login">Sign in</Link>}
               />
             </>
           )}

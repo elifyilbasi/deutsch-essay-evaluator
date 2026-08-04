@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
  */
 
 /** The UTC calendar day, as stored in DailyUsage.day. */
-export function utcDay(now = new Date()): string {
+function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
@@ -45,8 +45,8 @@ function getDailyEvalLimit(): number {
 
 /**
  * A ceiling across all users, checked before the per-user one. Per-user quota is
- * fairness; with open registration an abuser simply creates accounts, so this is what
- * actually protects the shared key. Unset means no ceiling.
+ * fairness; sign-in is open to anyone with a Google account, so this is what actually
+ * protects the shared key. Unset means no ceiling.
  */
 function getGlobalDailyLimit(): number | null {
   return readLimitEnv(process.env.GLOBAL_DAILY_EVAL_LIMIT);
@@ -67,12 +67,12 @@ function newAccountCutoff(now = new Date()): Date {
 /**
  * Evaluations per UTC day shared by *every* account younger than NEW_ACCOUNT_HOURS.
  *
- * The per-user quota assumes accounts cost something to make; with open registration
- * they do not, so an abuser does not spend their own five, they mint accounts and spend
- * everybody's. Registration throttling raises the price of that; this bounds the payoff.
- * A farmed account is always a new account, so however many are created they draw from
- * this one allowance and the rest of the ceiling stays for people who were here
- * yesterday.
+ * The per-user quota assumes accounts cost something to make. Google sign-in is what
+ * makes that true — minting accounts now means minting Google accounts, which Google
+ * gates with phone verification at scale. This is the defence in depth behind it, and it
+ * holds even if that assumption ever weakens: a farmed account is always a new account,
+ * so however many are created they draw from this one allowance and the rest of the
+ * ceiling stays for people who were here yesterday.
  *
  * It is deliberately not a fraction of the global ceiling: a plain number is easier to
  * reason about, and it still works when no ceiling is configured. Unset means new

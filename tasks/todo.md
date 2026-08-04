@@ -575,3 +575,78 @@ behind.
 - `GLOBAL_DAILY_EVAL_LIMIT="100"` and `GEMINI_RPM_LIMIT="5"` are guesses on the safe side
   until the real free-tier numbers for `gemini-flash-latest` are read out of AI Studio.
   They must also be set in the Vercel project, or production stays uncapped.
+
+---
+
+# Google sign-in, in place of email and password
+
+Two things at once. The per-user quota assumes accounts cost something to make, and with
+open registration they cost nothing — Google's accounts are not free, because Google gates
+them with phone verification at scale. And the credentials path was the un-throttled
+bcrypt endpoint: with no password there is nothing to guess, so that closes by deletion
+rather than by yet another counter.
+
+## Plan
+
+- [x] Add Google alongside the password form, so a misconfigured client cannot lock anyone out
+- [x] Prove the existing account *links* rather than forking
+- [x] Only then remove the password path
+- [x] Make the entry points say what actually happens
+
+## Review
+
+**The linking is the whole risk.** One account existed, `…@gmail.com`, with 7 essays and no
+OAuth account. Auth.js refuses by default to attach a Google identity to an existing user
+with the same address (`OAuthAccountNotLinked`), so that person would either be locked out
+or silently become a second, empty user with their essays stranded on the first.
+`allowDangerousEmailAccountLinking: true` is what avoids that. It is off by default for
+good reason — linking on a merely *claimed* address is account takeover — and safe for
+this provider specifically because Google verifies the address it returns, which is the
+case the flag exists for. It must not be copied onto a provider that does not.
+
+Verified before deleting anything: `provider google | oidc | linked to
+cms3ahz4n0000kvjt62l8i09u`, one user row not two, 7 essays still attached.
+
+**Then the removals.** Credentials provider, `/api/register`, `/register`, the Sign up
+button, the password form, `bcryptjs`. Auth.js advertises exactly one provider now.
+
+The per-IP registration throttle went with the register route, which is a correction
+rather than a loss: it existed to make accounts expensive, and that is Google's job now.
+`RateWindow` stays for the rate gate — down to a single row and no index, since nothing
+accumulates any more.
+
+**Comments that had become false** were rewritten, in `.env.example` and `rateLimit.ts`:
+both argued from "registration is open, accounts are cheap", which stopped being true
+with this change. The new-account share cap and `FIRST_DAY_EVAL_LIMIT` stay and still
+work — they key off `User.createdAt`, which the adapter sets when it creates the row on
+first sign-in.
+
+**Wording.** With OAuth there is no sign-up step, so the three entry points had to stop
+disagreeing: the home CTA already said "Get started", while the nav and the login page
+said "Log in" — which tells a first-time visitor they need an account they do not have.
+Both now say "Sign in", and the page says so explicitly: signing in with Google creates
+the account.
+
+`User.passwordHash` is kept and marked vestigial. Dropping a column discards the hashes
+irreversibly and it is the only way back if OAuth has to be rolled back.
+
+### Verified
+
+Sign-in linked to the existing user (above). `/register` and `/api/register` return 404,
+and `npm run build` confirms both are gone from the route table. Signed out,
+`/dashboard`, `/write` and `/essays/*` still redirect to `/login?callbackUrl=…`. 119
+tests, `tsc --noEmit`, eslint and `npm run check:concurrency` all green; no console
+errors.
+
+Incidental find: `tsc` was failing on `.next/types/validator.ts`, a stale artifact from a
+production build dated three weeks earlier. Dev mode never rewrites it, so it would have
+failed on any route change since; the build regenerated it.
+
+### Open
+
+- The account-*creation* path is untested end to end — the existing account exercised
+  linking, which was the risky half. A second Google account would confirm both the row
+  creation and that `FIRST_DAY_EVAL_LIMIT` gives it 2 rather than 5.
+- Production needs its own callback URL on the OAuth client
+  (`https://<domain>/api/auth/callback/google`) and both variables set wherever it runs.
+- `passwordHash` can be dropped once this has proven itself.
