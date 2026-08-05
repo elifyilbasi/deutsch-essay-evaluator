@@ -9,6 +9,7 @@ import { CriteriaBreakdown } from "@/components/criteria-breakdown";
 import { AnnotatedEssay } from "@/components/annotated-essay";
 import { LeitpunktCoverageList } from "@/components/leitpunkt-coverage";
 import { TaskBrief } from "@/components/task-brief";
+import { EvaluateEssayButton } from "@/components/evaluate-essay-button";
 import { formatDuration } from "@/lib/formatDuration";
 import { getRubric } from "@/lib/rubrics";
 import type { CriterionScore, Correction, LeitpunktCoverage } from "@/lib/gemini";
@@ -194,8 +195,14 @@ export default async function EssayDetailPage({
         </>
       ) : (
         <Card>
-          <CardContent className="py-6 text-sm text-muted-foreground">
-            This essay hasn&apos;t been evaluated yet.
+          {/* An essay reaches this state when it was saved but the evaluation failed —
+              a busy model is enough. Without an action here it stayed unscored for good. */}
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 py-6 text-sm text-muted-foreground">
+            <span>
+              This essay hasn&apos;t been evaluated yet. Your text is saved — you can run
+              the evaluation now.
+            </span>
+            <EvaluateEssayButton essayId={essay.id} />
           </CardContent>
         </Card>
       )}

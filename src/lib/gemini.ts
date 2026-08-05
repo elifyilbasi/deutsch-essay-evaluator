@@ -451,6 +451,54 @@ function buildResultLabel(params: {
  * Matched on the status rather than with `instanceof ApiError`, since the SDK also wraps
  * transport-level failures, and a 429 is a 429 whichever layer raised it.
  */
+/**
+ * Whether the model was too busy to take the call — Google's 503 UNAVAILABLE, whose own
+ * message says "Spikes in demand are usually temporary. Please try again later."
+ *
+ * Kept apart from `isQuotaError` because the two want opposite handling on the way out:
+ * a 429 means slow down, so retrying it immediately makes things worse, while a 503 is
+ * precisely the case where trying again shortly is the right move. They agree on one
+ * thing — neither reached the model — which is why both refund.
+ */
+export function isOverloadedError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  if ((error as { status?: unknown }).status === 503) return true;
+  const message = error instanceof Error ? error.message : "";
+  return /UNAVAILABLE|\b503\b/.test(message);
+}
+
+/** Attempts to make of an overloaded call, including the first. */
+const MAX_ATTEMPTS = 3;
+/**
+ * Waits between those attempts. Deliberately short: a user is holding a request open
+ * behind this, so the whole retry budget adds at most ~4s to a submission that would
+ * otherwise have failed outright.
+ */
+const RETRY_DELAYS_MS = [1000, 3000];
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Runs `call`, trying again only while the model is too busy to take it.
+ *
+ * Separated from `evaluateEssay` so the policy is testable without a Gemini client: the
+ * thing worth pinning down is which failures are retried and how many times, not the
+ * request around them.
+ */
+export async function retryWhileOverloaded<T>(
+  call: () => Promise<T>,
+  { attempts = MAX_ATTEMPTS, delays = RETRY_DELAYS_MS, wait = sleep } = {},
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await call();
+    } catch (error) {
+      if (attempt >= attempts || !isOverloadedError(error)) throw error;
+      await wait(delays[attempt - 1] ?? delays.at(-1) ?? 0);
+    }
+  }
+}
+
 export function isQuotaError(error: unknown): boolean {
   if (typeof error !== "object" || error === null) {
     return false;
@@ -469,15 +517,29 @@ export async function evaluateEssay(task: TaskContext): Promise<{
 }> {
   const ai = getClient();
   const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
-
-  const response = await ai.models.generateContent({
+  const request = {
     model,
     contents: buildPrompt(task),
     config: {
       responseMimeType: "application/json",
       responseSchema: buildResponseSchema(task.rubric),
     },
-  });
+  };
+
+  /*
+    Retried only for an overloaded model. A single 503 used to lose the whole submission:
+    the essay was saved, the call failed, and the learner was left with a text that could
+    never be scored. Google calls that spike temporary and says to try again, so trying
+    again is the fix.
+
+    Deliberately narrow. A 429 is not retried — it means slow down, and hammering it is
+    what turns a brief rate limit into a long one. Nor is a bad response: an empty body or
+    unparseable JSON is a fault in the request or the schema, and repeating it identically
+    would just pay for the same answer twice.
+  */
+  const response = await retryWhileOverloaded(() =>
+    ai.models.generateContent(request),
+  );
 
   const text = response.text;
   if (!text) {

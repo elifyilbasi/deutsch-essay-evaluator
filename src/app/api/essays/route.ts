@@ -9,7 +9,7 @@ import {
   checkEssayLength,
   exceedsBodyLimit,
 } from "@/lib/essayLimits";
-import { evaluateEssay, isQuotaError } from "@/lib/gemini";
+import { evaluateEssay, isOverloadedError, isQuotaError } from "@/lib/gemini";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -208,6 +208,22 @@ export async function POST(request: Request) {
           id: essay.id,
         },
         { status: 429 },
+      );
+    }
+
+    // Refunded for the same reason: the model was too busy to take the call, so it never
+    // reached one and cost the shared key nothing. Charging a learner a day's slot for
+    // Google's capacity is the same unfairness as charging them for our own rate limits.
+    // This is what is left after the retries in evaluateEssay have already been spent.
+    if (isOverloadedError(error)) {
+      await releaseEvaluation(session.user.id);
+      return NextResponse.json(
+        {
+          error:
+            "The evaluation service is busy right now. Your text has been saved and this did not use up one of your evaluations — open the essay and retry in a minute.",
+          id: essay.id,
+        },
+        { status: 503 },
       );
     }
 
