@@ -3,7 +3,7 @@
   "properties": {
     "themaVerfehlt": {
       "type": "BOOLEAN",
-      "description": "True only if the text misses the topic entirely (Thema verfehlt) - i.e. it is not a response to this task at all. This zeroes the whole letter, so reserve it for genuine cases."
+      "description": "True only if the text misses the topic entirely (Thema verfehlt) - i.e. it is not a response to this task at all. This zeroes the whole letter, so reserve it for genuine cases. A text that takes up the right topic but answers the wrong Situierung is NOT Thema verfehlt: leave this false and grade the task-achievement criterion D instead, so the language criteria still count."
     },
     "leitpunktCoverage": {
       "type": "ARRAY",

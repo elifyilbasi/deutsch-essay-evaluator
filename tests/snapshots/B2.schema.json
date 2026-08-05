@@ -3,11 +3,11 @@
   "properties": {
     "themaVerfehlt": {
       "type": "BOOLEAN",
-      "description": "True only if the text misses the topic entirely (Thema verfehlt) - i.e. it is not a response to this task at all. At this level it carries no automatic penalty; it is recorded, not scored."
+      "description": "True only if the text misses the topic entirely (Thema verfehlt) - i.e. it is not a response to this task at all. This zeroes the whole letter, so reserve it for genuine cases. A text that takes up the right topic but answers the wrong Situierung is NOT Thema verfehlt: leave this false and grade the task-achievement criterion D instead, so the language criteria still count."
     },
     "leitpunktCoverage": {
       "type": "ARRAY",
-      "description": "One entry per Leitpunkt of the task, in the same order they were given, judged independently. THEN, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one entry for it with selfChosen=true. Die Aufgabe verlangt entweder mindestens drei der vorgegebenen Punkte oder mindestens zwei der vorgegebenen Punkte und einen weiteren Aspekt eigener Wahl. Ein selbst gewählter Aspekt zählt dabei so viel wie ein vorgegebener Leitpunkt.",
+      "description": "One entry per Leitpunkt of the task, in the same order they were given, judged independently. THEN, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one entry for it with selfChosen=true. Für die Bestnote werden drei Leitpunkte bzw. zwei Leitpunkte und ein weiterer, auf die Situierung bezogener Aspekt eigener Wahl inhaltlich angemessen bearbeitet. Ein selbst gewählter Aspekt zählt dabei so viel wie ein vorgegebener Leitpunkt, muss sich aber auf die Situierung beziehen.",
       "items": {
         "type": "OBJECT",
         "properties": {
@@ -26,7 +26,7 @@
               "PARTIAL",
               "MISSING"
             ],
-            "description": "ADDRESSED = \"Der Leitpunkt ist ausgeführt, nicht nur genannt: die Behandlung erfordert mehr als ein Satzgefüge. Der Punkt ist inhaltlich entwickelt, dem Schreibanlass angemessen und im Register des Briefes behandelt.\". PARTIAL = \"Der Leitpunkt wird nur gestreift — in einem einzigen Satzgefüge abgehandelt, bloß erwähnt oder inhaltlich nicht entwickelt. Auf diesem Niveau genügt ein einzelner kurzer Satz nicht.\". MISSING = \"Der Leitpunkt wird gar nicht behandelt.\"."
+            "description": "ADDRESSED = \"Der Leitpunkt (oder der frei gewählte Aspekt) ist inhaltlich angemessen auf dem Niveau B2 bearbeitet: mehr als ein einziges Satzgefüge, inhaltlich entwickelt, adressatenbezogen und auf die Situierung bezogen.\". PARTIAL = \"Der Punkt wird nur gestreift — in einem einzigen Satzgefüge abgehandelt, bloß erwähnt oder inhaltlich nicht entwickelt. Das zählt nicht als bearbeitet und darf nicht in die Zählung für Kriterium I eingehen.\". MISSING = \"Der Punkt wird gar nicht behandelt.\"."
           },
           "comment": {
             "type": "STRING",
@@ -53,7 +53,6 @@
           "band": {
             "type": "STRING",
             "enum": [
-              "A*",
               "A",
               "B",
               "C",

@@ -7,30 +7,34 @@ import { checkEssayLength } from "@/lib/essayLimits";
 import { representativeTask } from "./fixtures";
 
 /**
- * telc Deutsch B2, Schriftlicher Ausdruck. The traps here are all "B2 is not a rescaled
- * B1": its first criterion is a holistic judgement rather than a count of Leitpunkte, a
- * self-chosen aspect can stand in for a printed point, it has no Thema-verfehlt override,
- * it has a band above A, and it sets a word floor with no ceiling.
+ * telc Deutsch B2, Schriftlicher Ausdruck, against telc's own published criteria —
+ * Übungstest 1, überarbeitete Auflage 2019, transcribed in
+ * exam-materials/telc/b2/BEWERTUNGSKRITERIEN.md.
  *
- * Source for every number asserted below: Modelltest TELC Deutsch B2, Klett-Langenscheidt
- * 2013, pp. 38-39, transcribed in exam-materials/telc/b2/BEWERTUNGSKRITERIEN.md.
+ * These assertions exist because the rubric was first built from a Klett-Langenscheidt
+ * Modelltest (2013) reproducing a superseded format, and was wrong in four ways that each
+ * moved marks: Kriterium I was holistic instead of a count, an A* band was offered that
+ * telc does not have, Thema verfehlt did not zero the task, and the letter's apparatus was
+ * marked under Kriterium I. Every one of those is pinned below.
  */
 
 const B2 = getRubric("TELC", "B2")!;
-const bandsFor = (letter: "A*" | "A" | "B" | "C" | "D") => ({
-  schreibanlass: letter,
+const kriterium = (key: string) => B2.criteria.find((c) => c.key === key)!;
+const allBands = (letter: "A" | "B" | "C" | "D") => ({
+  aufgabenbewaeltigung: letter,
   kommunikativeGestaltung: letter,
-  formaleRichtigkeit: letter === "A*" ? ("A" as const) : letter,
+  formaleRichtigkeit: letter,
 });
 
 describe("telc B2 scoring", () => {
-  it("reaches exactly the 45 points the paper states", () => {
-    // "Die Höchstpunktzahl für diesen Prüfungsteil beträgt 45 Punkte." Three criteria at
-    // 5, summed and multiplied by three.
+  it("reaches exactly the 45 points telc states", () => {
+    // "Die Punktzahl ... ist die Summe der Punkte, die für die drei Kriterien vergeben
+    // wurden. In der telc Zentrale wird diese Punktzahl mit drei multipliziert ... maximal
+    // 45 Punkte ... 15 % der ... Gesamtpunktzahl von 300 Punkten."
     assert.equal(maxRawScore(B2, 4), 15);
     const perfect = scoreFromBands({
       rubric: B2,
-      bands: bandsFor("A"),
+      bands: allBands("A"),
       themaVerfehlt: false,
       leitpunktCount: 4,
     });
@@ -38,44 +42,112 @@ describe("telc B2 scoring", () => {
     assert.equal(perfect.maxTotal, 45);
   });
 
-  it("scores A* exactly as A, on the criteria that offer it", () => {
-    // A* records that the writing is above B2; it is not worth more.
-    const starred = scoreFromBands({
-      rubric: B2,
-      bands: bandsFor("A*"),
-      themaVerfehlt: false,
-      leitpunktCount: 4,
-    });
-    assert.equal(starred.total, 45);
+  it("uses 5/3/1/0 on every criterion", () => {
+    for (const c of B2.criteria) {
+      assert.deepEqual(
+        c.bands.map((b) => [b.band, b.points]),
+        [
+          ["A", 5],
+          ["B", 3],
+          ["C", 1],
+          ["D", 0],
+        ],
+        `${c.key} must carry telc's point table`,
+      );
+    }
   });
 
-  it("offers A* on the first two criteria only", () => {
-    // "In den beiden ersten Kriterien kann auch die Bewertung A* vergeben werden."
-    const withStar = B2.criteria
-      .filter((c) => c.bands.some((b) => b.band === "A*"))
-      .map((c) => c.key);
-    assert.deepEqual(withStar, ["schreibanlass", "kommunikativeGestaltung"]);
+  it("offers no band above A", () => {
+    // The criteria table reads "A B C D*", where the asterisk footnotes the Thema-verfehlt
+    // rule. An A* was once carried here from a 2013 publisher's Modelltest; telc's own 2019
+    // paper has no such band, and offering one invented five points of headroom.
+    assert.doesNotMatch(JSON.stringify(buildResponseSchema(B2)), /A\*/);
+  });
+});
+
+describe("telc B2 Kriterium I is a count", () => {
+  const k1 = kriterium("aufgabenbewaeltigung");
+
+  it("is named Aufgabenbewältigung and banded by how many points are treated", () => {
+    // The old reading called this "Behandlung des Schreibanlasses" and instructed the
+    // examiner NOT to count — the exact inverse of the grid.
+    assert.match(k1.label, /Aufgabenbewältigung/);
+    assert.match(k1.description, /Count how many points are treated/i);
+    assert.doesNotMatch(k1.description, /Do NOT band this by counting/i);
   });
 
-  it("does not zero the letter for Thema verfehlt", () => {
-    // B1 states that override outright; the B2 paper states none, so an off-topic B2
-    // letter is graded down through the bands rather than voided.
-    assert.equal(B2.themaVerfehltZeroesTask, false);
+  it("puts three points, or two plus a self-chosen aspect, at A", () => {
+    const band = (letter: string) => k1.bands.find((b) => b.band === letter)!.descriptor;
+    assert.match(band("A"), /Drei Leitpunkte bzw\. zwei Leitpunkte und ein weiterer/);
+    assert.match(band("B"), /Zwei Leitpunkte bzw\. ein Leitpunkt und ein weiterer/);
+    assert.match(band("C"), /Ein Leitpunkt bzw\. ein weiterer/);
+    assert.match(band("D"), /Kein Leitpunkt/);
+  });
+
+  it("expects three treated points, only two of which must be printed", () => {
+    assert.deepEqual(
+      {
+        min: B2.selfChosenAspects?.minLeitpunkte,
+        total: B2.selfChosenAspects?.expectedTotal,
+      },
+      { min: 2, total: 3 },
+    );
+  });
+
+  it("requires more than one Satzgefüge before a point counts", () => {
+    // telc's own threshold, and the opposite of B1's, where a single short sentence does.
+    assert.match(B2.leitpunktStatusGuidance!.ADDRESSED, /mehr als ein einziges Satzgefüge/);
+    assert.match(
+      getRubric("TELC", "B1")!.leitpunktStatusGuidance!.ADDRESSED,
+      /Ein einziger, auch kurzer Satz genügt/,
+    );
+  });
+});
+
+describe("telc B2 zero-out rules", () => {
+  it("zeroes the whole task for Thema verfehlt", () => {
+    // "Hat der Text mit dem Schreibanlass keine oder kaum eine Verbindung, muss bei allen
+    // Kriterien D vergeben werden." The old reading declared no such rule at all.
+    assert.equal(B2.themaVerfehltZeroesTask, true);
     const off = scoreFromBands({
       rubric: B2,
-      bands: bandsFor("C"),
+      bands: allBands("A"),
       themaVerfehlt: true,
       leitpunktCount: 4,
     });
-    assert.equal(off.zeroedReason, null);
-    assert.equal(off.total, 9);
+    assert.equal(off.total, 0);
+    assert.equal(off.zeroedReason, "Thema verfehlt");
   });
 
-  it("lets no single criterion zero the whole task", () => {
+  it("keeps Situierung verfehlt out of the zeroing rule", () => {
+    // Right topic, wrong situation: only Kriterium I is D and the language criteria are
+    // still marked. That is a band choice, not a zero — themaVerfehlt must stay false.
+    const situierung = scoreFromBands({
+      rubric: B2,
+      bands: {
+        aufgabenbewaeltigung: "D",
+        kommunikativeGestaltung: "A",
+        formaleRichtigkeit: "A",
+      },
+      themaVerfehlt: false,
+      leitpunktCount: 4,
+    });
+    assert.equal(situierung.zeroedReason, null);
+    assert.equal(situierung.total, 30);
+    assert.match(kriterium("aufgabenbewaeltigung").description, /only THIS criterion is D/);
+  });
+
+  it("lets a D on Formale Richtigkeit leave the other two alone", () => {
+    // "Wird Kriterium III mit D bewertet, können die Kriterien I und II mit C, B oder A
+    // bewertet sein."
     assert.ok(B2.criteria.every((c) => !c.zeroesWholeTask));
     const failedForm = scoreFromBands({
       rubric: B2,
-      bands: { schreibanlass: "A", kommunikativeGestaltung: "A", formaleRichtigkeit: "D" },
+      bands: {
+        aufgabenbewaeltigung: "A",
+        kommunikativeGestaltung: "A",
+        formaleRichtigkeit: "D",
+      },
       themaVerfehlt: false,
       leitpunktCount: 4,
     });
@@ -84,89 +156,55 @@ describe("telc B2 scoring", () => {
   });
 });
 
-describe("telc B2 coverage rule", () => {
-  it("expects three treated points, only two of which must be printed", () => {
-    // "entweder a) mindestens drei der folgenden Punkte oder b) mindestens zwei der
-    // folgenden Punkte und einen weiteren Aspekt Ihrer Wahl."
-    assert.deepEqual(
-      { min: B2.selfChosenAspects?.minLeitpunkte, total: B2.selfChosenAspects?.expectedTotal },
-      { min: 2, total: 3 },
+describe("telc B2 Textsorte", () => {
+  it("does not require the letter's apparatus, and says so under Kriterium II", () => {
+    // "Bei dieser Aufgabe soll eine (halb-)formelle E-Mail verfasst werden. Daher sind
+    // Textsortenmerkmale des Briefes (Absender, Empfänger, Datum) nicht gefordert."
+    // This was once asserted the other way under Kriterium I, costing a letter a band.
+    assert.match(
+      kriterium("kommunikativeGestaltung").description,
+      /Absender, Empfänger, Datum — are explicitly nicht gefordert/,
+    );
+    assert.doesNotMatch(kriterium("aufgabenbewaeltigung").description, /Absender/);
+  });
+
+  it("withholds A only for missing Textsortenmerkmale AND thin vocabulary", () => {
+    // A conjunction in the source; either alone is not enough.
+    assert.match(
+      kriterium("kommunikativeGestaltung").description,
+      /Betreffzeile, Anrede, Schlussformel\) are missing AND the Wortschatzspektrum/,
     );
   });
 
-  it("tells the model a self-chosen aspect counts, and not to count Leitpunkte", () => {
-    // The failure this guards is the model applying B1's rule at B2: banding Kriterium 1
-    // by how many printed points were covered would mark a legitimate option (b) letter
-    // down twice, once in coverage and once in the criterion.
-    const prompt = buildPrompt(representativeTask(B2));
-    assert.match(prompt, /selfChosen=true/);
-    assert.match(prompt, /NOT a count of Leitpunkte/);
-    assert.doesNotMatch(prompt, /count how many points you marked ADDRESSED/);
-  });
-
-  it("keeps B1 counting its Leitpunkte", () => {
-    // The same prompt builder serves both, so B2's rule must not leak backwards.
-    const b1 = buildPrompt(representativeTask(getRubric("TELC", "B1")!));
-    assert.match(b1, /count how many points you marked ADDRESSED/);
-    assert.doesNotMatch(b1, /selfChosen/);
-  });
-
-  it("offers the A* band to the model at B2 and nowhere else", () => {
-    const schema = JSON.stringify(buildResponseSchema(B2));
-    assert.match(schema, /"A\*"/);
-    const b1Schema = JSON.stringify(buildResponseSchema(getRubric("TELC", "B1")!));
-    assert.doesNotMatch(b1Schema, /"A\*"/);
+  it("tells the model the Betreff cannot withhold a band by itself", () => {
+    assert.match(buildPrompt(representativeTask(B2)), /must not withhold a band on its own/i);
   });
 });
 
 describe("telc B2 length", () => {
   it("sets a floor and no ceiling", () => {
-    // "Schreiben Sie mindestens 150 Wörter", with no maximum printed anywhere.
     assert.equal(B2.minWords, 150);
     assert.equal(B2.maxWords, null);
   });
 
   it("accepts a long letter rather than refusing it", () => {
-    // A ceiling invented for B2 would have made checkEssayLength refuse honest work:
-    // null x WORD_TOLERANCE is 0, which would reject every submission.
     const long = Array.from({ length: 400 }, () => "Wort").join(" ");
     assert.equal(checkEssayLength(long, B2, 400), null);
   });
 
   it("still enforces the character stop, which is the real defence", () => {
-    const huge = "a".repeat(6000);
-    assert.ok(checkEssayLength(huge, B2, 1));
+    assert.ok(checkEssayLength("a".repeat(6000), B2, 1));
   });
 });
 
-describe("a band a criterion does not define", () => {
-  // The response schema offers ONE band enum for every criterion, because the criteria
-  // come back as a homogeneous array. So the model can hand Formale Richtigkeit an A*,
-  // which that criterion does not define — and it must not cost the letter 5 points.
-  it("scores A* on a criterion without one exactly as A", () => {
-    const starred = scoreFromBands({
-      rubric: B2,
-      bands: { schreibanlass: "A", kommunikativeGestaltung: "A", formaleRichtigkeit: "A*" },
-      themaVerfehlt: false,
-      leitpunktCount: 4,
-    });
-    assert.equal(starred.total, 45, "a flawless letter must not lose marks to a spelling of A");
-  });
-
-  it("shows it as A rather than falling through to D", () => {
-    const criterion = B2.criteria.find((c) => c.key === "formaleRichtigkeit")!;
-    assert.equal(resolveBand(criterion, "A*")?.band, "A");
-    assert.equal(resolveBand(criterion, "A*")?.points, 5);
-  });
-
-  it("still resolves a letter the criterion does define", () => {
-    const criterion = B2.criteria.find((c) => c.key === "schreibanlass")!;
-    assert.equal(resolveBand(criterion, "A*")?.band, "A*");
-    assert.equal(resolveBand(criterion, "C")?.points, 1);
+describe("band resolution", () => {
+  it("resolves a letter the criterion defines", () => {
+    const k3 = kriterium("formaleRichtigkeit");
+    assert.equal(resolveBand(k3, "A")?.points, 5);
+    assert.equal(resolveBand(k3, "D")?.points, 0);
   });
 
   it("resolves nothing for an absent verdict, so the caller can fall back", () => {
-    const criterion = B2.criteria.find((c) => c.key === "formaleRichtigkeit")!;
-    assert.equal(resolveBand(criterion, undefined), undefined);
+    assert.equal(resolveBand(kriterium("formaleRichtigkeit"), undefined), undefined);
   });
 });

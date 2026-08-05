@@ -14,43 +14,41 @@ THE LEITPUNKTE (content points) THE STUDENT MUST COVER:
 
 FORMAL REQUIREMENTS:
 - The task requires the FORMAL register ("Sie"). Using "du" is a communicative-design error.
-- The task requires a subject line (Betreff). Note whether one is present and informative.
+- The task asks for a subject line (Betreff). Note in your comment whether one is present and informative, as advice — but no criterion marks it, so its absence must not withhold a band on its own.
 - Expected length: at least 150 words, with no upper limit — do not penalise length. The student wrote 150 words.
 
 LEVEL-SPECIFIC GUIDANCE FOR YOU AS EXAMINER:
-This is a telc Deutsch B2 Schriftlicher Ausdruck: a formal letter — a Beschwerde, an Anfrage or a Bewerbung — written in 30 minutes in response to a printed advertisement, of at least 150 words with no upper limit. Grade each criterion by choosing the band whose descriptor best fits, exactly as a telc examiner would, and do not invent intermediate grades. The three criteria are independent: a D on one leaves the others untouched, and at this level there is no Thema-verfehlt rule that zeroes the letter. Kriterium 1 is a single holistic judgement about Textsorte, Register and content coverage together — it is not a count of Leitpunkte. Award A* on Kriterium 1 or 2 only where the writing is genuinely above B2; it earns the same points as A and records that the candidate has outgrown the level.
+This is a telc Deutsch B2 Schriftlicher Ausdruck: a semi-formal or formal e-mail — a Beschwerde, a Bitte um Information, a Bewerbung — written in 30 minutes in response to a printed advertisement or notice, of at least 150 words with no upper limit. Grade each criterion by choosing the band whose descriptor best fits, exactly as a telc examiner would, and do not invent intermediate grades. Kriterium I is decided by COUNTING how many points are treated adequately — three, or two plus a self-chosen aspect related to the Situierung, earns A — so settle the per-point judgements first, remembering that a point needs more than a single Satzgefüge to count. Kriterien II and III are graded against the CEFR scale, where A means the writing sits in the upper part of B2 and C means it has dropped to B1. The criteria are otherwise independent: a D on Formale Richtigkeit leaves the other two untouched. Only a text with no or barely any connection to the Schreibanlass is Thema verfehlt and graded D throughout; a text on the right topic but the wrong Situierung loses only Kriterium I.
 
 EVALUATION CRITERIA:
 COVERAGE RULE — the candidate may bring their own content
-   Die Aufgabe verlangt entweder mindestens drei der vorgegebenen Punkte oder mindestens zwei der vorgegebenen Punkte und einen weiteren Aspekt eigener Wahl. Ein selbst gewählter Aspekt zählt dabei so viel wie ein vorgegebener Leitpunkt.
+   Für die Bestnote werden drei Leitpunkte bzw. zwei Leitpunkte und ein weiterer, auf die Situierung bezogener Aspekt eigener Wahl inhaltlich angemessen bearbeitet. Ein selbst gewählter Aspekt zählt dabei so viel wie ein vorgegebener Leitpunkt, muss sich aber auf die Situierung beziehen.
    So a letter treating 2 of the printed Leitpunkte plus 1 relevant aspect(s) of its own has covered the task IN FULL. Do not treat the printed points it passed over as failures, and do not mark it down for choosing that option — the task offers it.
    Still judge each printed Leitpunkt on its own and report it, so the learner sees what was and was not taken up; then append any self-chosen aspect with selfChosen=true. Coverage is short only when fewer than 3 points in total, printed and self-chosen together, are properly treated.
 
-1. key="schreibanlass" — Kriterium 1: Behandlung des Schreibanlasses
-   Judge two things together, as the grid does: (1) die Wahl von Textsorte und Register — this is a formal letter, so Absender, Anschrift, Datum, Betreffzeile, Anrede and Schlussformel belong to it and the Sie-register must hold throughout; and (2) die Berücksichtigung von mindestens zwei Leitpunkten und gegebenenfalls weiterer inhaltlicher Aspekte. Do NOT band this by counting printed Leitpunkte the way telc B1 does — the task explicitly allows two printed points plus a self-chosen aspect, and a candidate who took that option has covered the task in full. A point counts as treated only if it is developed beyond a single Satzgefüge.
+1. key="aufgabenbewaeltigung" — Kriterium I: Aufgabenbewältigung
+   Count how many points are treated inhaltlich angemessen auf dem Niveau B2, and pick the band that matches the count — a printed Leitpunkt and a self-chosen aspect count alike, but a self-chosen aspect must relate to the Situierung. A point counts only if it is developed beyond a single Satzgefüge; merely mentioning it does not. Judge the realisation of the task for a semi-formal or formal e-mail (Beschwerde, Bitte um Information and so on): the candidate's own position should be presented differentiert und adressatenbezogen, and any reduction of content or linguistic complexity is a reason to mark down. Two failures are distinct and must not be confused. If the text has no or barely any connection to the Schreibanlass, that is Thema verfehlt and D follows in EVERY criterion — report it via the themaVerfehlt flag. If the text takes up the topic but does not fit the Situierung (telc's example: asked to request information about a placement, the candidate sends an application instead), only THIS criterion is D — the language criteria are still marked normally, and themaVerfehlt must NOT be set.
    Bands:
-     A* (5 Punkte): Die Behandlung des Schreibanlasses liegt oberhalb des Zielniveaus B2.
-     A (5 Punkte): voll angemessen
-     B (3 Punkte): im Großen und Ganzen angemessen
-     C (1 Punkte): kaum noch akzeptabel
-     D (0 Punkte): insgesamt nicht ausreichend
+     A (5 Punkte): Die Schreibleistung deckt die Aufgabenstellung voll ab. Drei Leitpunkte bzw. zwei Leitpunkte und ein weiterer auf die Situierung bezogener Aspekt werden inhaltlich angemessen auf dem angezielten Niveau bearbeitet.
+     B (3 Punkte): Die Schreibleistung deckt die Aufgabenstellung weitgehend ab. Zwei Leitpunkte bzw. ein Leitpunkt und ein weiterer auf die Situierung bezogener Aspekt werden inhaltlich angemessen auf dem angezielten Niveau bearbeitet.
+     C (1 Punkte): Die Schreibleistung deckt die Aufgabenstellung nur teilweise ab. Ein Leitpunkt bzw. ein weiterer auf die Situierung bezogener Aspekt wird inhaltlich angemessen auf dem angezielten Niveau bearbeitet.
+     D (0 Punkte): Die Schreibleistung deckt die Aufgabenstellung nicht ab. Kein Leitpunkt bzw. kein weiterer auf die Situierung bezogener Aspekt wird inhaltlich angemessen auf dem angezielten Niveau bearbeitet.
 
-2. key="kommunikativeGestaltung" — Kriterium 2: Kommunikative Gestaltung
-   Judge the four things the grid names: die Textorganisation, die Verknüpfung der Sätze/Äußerungseinheiten, die sprachliche Vielfalt und die Registertreue. At B2 expect a letter that is planned rather than a list — a fitting Einleitung, a sensible order of the points, and a Schluss — with connectives that bind the utterances into one text, vocabulary with genuine range, and a formal register that never wavers.
+2. key="kommunikativeGestaltung" — Kriterium II: Kommunikative Gestaltung
+   Judge the range of expression together with structure and text logic — Kohäsion and Kohärenz: Textlogik, Konnektoren, Register and Wortschatzspektrum, and the discourse-steering elements that bind the utterances into one semantic whole. THE TEXTSORTE IS A SEMI-FORMAL OR FORMAL E-MAIL, so the letter's features — Absender, Empfänger, Datum — are explicitly nicht gefordert and their absence must never cost marks, whatever the task sheet's own advice says. Withhold A only when the Textsortenmerkmale of a semi-formal or formal message (Betreffzeile, Anrede, Schlussformel) are missing AND the Wortschatzspektrum is not fully adequate — both together, never one alone. Withhold B if the wrong register is chosen or the register wavers, if the Wortschatzspektrum is not adequate for B2, or if the Leitpunkte are listed linearly without logical connection. Give C where Textlogik, connectives, vocabulary range and register are predominantly unsuitable and would make a negative impression on the recipient, and D where they are wholly unsuitable.
    Bands:
-     A* (5 Punkte): Die kommunikative Gestaltung liegt oberhalb des Zielniveaus B2.
-     A (5 Punkte): voll angemessen
-     B (3 Punkte): im Großen und Ganzen angemessen
-     C (1 Punkte): kaum noch akzeptabel
-     D (0 Punkte): insgesamt nicht ausreichend
+     A (5 Punkte): B2 gut erfüllt — die Schreibleistung liegt im oberen Bereich des Zielniveaus. Kann sich in formellem und weniger formellem Stil überzeugend und klar ausdrücken; breites Spektrum sprachlicher Mittel; verwendet verschiedene Verknüpfungsmittel sinnvoll.
+     B (3 Punkte): B2 erfüllt — die Schreibleistung liegt auf dem Zielniveau. Kann sich klar ausdrücken; hinreichend breites Spektrum sprachlicher Mittel, jedoch mit Lücken im Wortschatz; begrenzte Anzahl von Verknüpfungsmitteln.
+     C (1 Punkte): B1 — die Schreibleistung liegt auf der Stufe unterhalb des Zielniveaus. Äußert sich über vertraute Themen; verbindet Einzelelemente zu einer linearen, zusammenhängenden Äußerung.
+     D (0 Punkte): A2 oder darunter — die Schreibleistung liegt zwei Stufen oder mehr unter dem Zielniveau. Nur elementare Sprachfunktionen und die häufigsten Konnektoren.
 
-3. key="formaleRichtigkeit" — Kriterium 3: Formale Richtigkeit
-   Bewertet werden Syntax, Morphologie und Orthographie. Weigh errors by whether they endanger die Verwirklichung der Schreibabsicht, and note that the bands turn on how many readings the text costs: B2 tolerates fewer comprehension-impeding errors than B1 does. There is no A* on this criterion.
+3. key="formaleRichtigkeit" — Kriterium III: Formale Richtigkeit
+   Judge grammar, orthography and punctuation. All Schreibkonventionen of standard varieties of German are accepted, including the rules of Groß- und Kleinschreibung. Weigh systematic errors far more heavily than slips: occasional Ausrutscher and traces of the first language are compatible with the top band, systematic errors are not. This criterion is independent of the others — telc states outright that a D here leaves Kriterien I and II free to be A, B or C — so never let weak grammar pull down the content or organisation bands.
    Bands:
-     A (5 Punkte): keine oder nur vereinzelte Fehler, die die Verwirklichung der Schreibabsicht aber nicht gefährden
-     B (3 Punkte): wenige Fehler, die bei einmaligem Lesen die Verwirklichung der Schreibabsicht nicht gefährden
-     C (1 Punkte): Fehler, die mehrmaliges Lesen erforderlich machen und so die Verwirklichung der Schreibabsicht deutlich gefährden
-     D (0 Punkte): so viele Fehler, dass die Schreibabsicht nicht verwirklicht wird
+     A (5 Punkte): B2 gut erfüllt — gute Beherrschung der Grammatik, keine systematischen Fehler, gelegentliche Ausrutscher möglich; Rechtschreibung und Zeichensetzung weitgehend korrekt.
+     B (3 Punkte): B2 erfüllt — recht gute Beherrschung der Grammatik, nur wenige systematische Fehler, die das Verständnis nicht gefährden; Rechtschreibung und Zeichensetzung hinreichend korrekt.
+     C (1 Punkte): B1 — ausreichende Beherrschung trotz deutlicher Einflüsse der Erstsprache; mehrere systematische Fehler, aber überwiegend bleibt klar, was ausgedrückt werden soll.
+     D (0 Punkte): A2 oder darunter — viele systematische, elementare Fehler, z. B. vermischte Zeitformen oder fehlende Subjekt-Verb-Kongruenz; die Rechtschreibung ist häufig phonetisch.
 
 STUDENT'S ESSAY (German, submitted as-is, do not alter before analysis):
 """
@@ -58,9 +56,9 @@ Beispieltext der Teilnehmerin.
 """
 
 Work in this order:
-1. Decide whether the text misses the topic entirely (themaVerfehlt). This is rare — only for a text that is not an answer to this task at all. Report it for the record; at this level it carries no automatic penalty, because an off-topic text already earns no content marks.
-2. Go through the Leitpunkte one at a time, in the order listed above, and give each a status, applying this level's own wording exactly: ADDRESSED = "Der Leitpunkt ist ausgeführt, nicht nur genannt: die Behandlung erfordert mehr als ein Satzgefüge. Der Punkt ist inhaltlich entwickelt, dem Schreibanlass angemessen und im Register des Briefes behandelt.", PARTIAL = "Der Leitpunkt wird nur gestreift — in einem einzigen Satzgefüge abgehandelt, bloß erwähnt oder inhaltlich nicht entwickelt. Auf diesem Niveau genügt ein einzelner kurzer Satz nicht.", MISSING = "Der Leitpunkt wird gar nicht behandelt.". Return one entry per Leitpunkt, copying its text verbatim. Do not merge or reorder them. Then, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one more entry for it with selfChosen=true.
-3. For each criterion, pick the ONE band (A*, A, B, C, D) whose descriptor best fits, and return it under that criterion's key. Kriterium 1 is a holistic judgement, NOT a count of Leitpunkte: weigh the choice of Textsorte and Register together with the coverage rule above.
+1. Decide whether the text misses the topic entirely (themaVerfehlt). This is rare — only for a text that is not an answer to this task at all.
+2. Go through the Leitpunkte one at a time, in the order listed above, and give each a status, applying this level's own wording exactly: ADDRESSED = "Der Leitpunkt (oder der frei gewählte Aspekt) ist inhaltlich angemessen auf dem Niveau B2 bearbeitet: mehr als ein einziges Satzgefüge, inhaltlich entwickelt, adressatenbezogen und auf die Situierung bezogen.", PARTIAL = "Der Punkt wird nur gestreift — in einem einzigen Satzgefüge abgehandelt, bloß erwähnt oder inhaltlich nicht entwickelt. Das zählt nicht als bearbeitet und darf nicht in die Zählung für Kriterium I eingehen.", MISSING = "Der Punkt wird gar nicht behandelt.". Return one entry per Leitpunkt, copying its text verbatim. Do not merge or reorder them. Then, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one more entry for it with selfChosen=true.
+3. For each criterion, pick the ONE band (A, B, C, D) whose descriptor best fits, and return it under that criterion's key. Kriterium 1 is a holistic judgement, NOT a count of Leitpunkte: weigh the choice of Textsorte and Register together with the coverage rule above.
 4. List concrete grammar, spelling, and word-choice errors as corrections (original -> corrected, each with a short explanation).
 5. Write a brief overall prose feedback summary.
 

@@ -80,7 +80,15 @@ export default async function EssayDetailPage({
       {essay.prompt.stimulusText && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">The letter you replied to</CardTitle>
+            {/* Named by what it is, on the same signal the prompt uses: a B1 task quotes
+                a letter from a person, a B2 task reprints an advertisement and has no
+                correspondent at all. Calling an Anzeige "the letter you replied to"
+                invented one. */}
+            <CardTitle className="text-base">
+              {essay.prompt.stimulusAuthor
+                ? "The letter you replied to"
+                : "The advertisement you responded to"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {/* Capped measure: the shell is wide so headers and charts have room, but a

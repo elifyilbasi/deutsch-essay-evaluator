@@ -1,15 +1,15 @@
 import type { Institute, Level } from "@/generated/prisma/client";
 
 /**
- * "A*" is telc B2's band for a performance above the target level: "In den beiden ersten
- * Kriterien kann auch die Bewertung A* vergeben werden, wenn die Leistung der/des
- * Teilnehmenden oberhalb des Niveaus B2 anzusiedeln ist." It is worth the same 5 points
- * as A, so it changes no score — it is a diagnostic the learner is entitled to see, and
- * dropping it would make the rubric disagree with the paper it is transcribed from.
+ * No telc grid this project implements defines a band beyond A.
  *
- * Levels declare which letters they use, so A* is offered only where a grid defines it.
+ * An "A*" was carried here for a while, taken from a Klett-Langenscheidt Modelltest
+ * (2013) that described one for telc B2. telc's own published B2 Übungstest
+ * (überarbeitete Auflage 2019) has no such band: its criteria table reads "A B C D*",
+ * where the asterisk is a footnote marker for the Thema-verfehlt rule. The grid decides
+ * what letters exist, not a publisher's reproduction of an older format.
  */
-export type BandLetter = "A*" | "A" | "B" | "C" | "D";
+export type BandLetter = "A" | "B" | "C" | "D";
 
 /** How thoroughly one Leitpunkt / Inhaltspunkt was treated. */
 export type LeitpunktStatus = "ADDRESSED" | "PARTIAL" | "MISSING";
@@ -162,31 +162,24 @@ export function maxRawScore(rubric: LevelRubric, leitpunktCount = 0): number {
 }
 
 /**
- * The band a criterion actually awards for the letter an examiner returned.
+ * The band a criterion awards for the letter an examiner returned.
  *
- * A grid may offer a letter on some criteria and not on others — telc B2 allows A* "in
- * den beiden ersten Kriterien" only — but the response schema has to present ONE enum to
- * the model, because the criteria come back as a homogeneous array and a JSON schema
- * cannot vary an item's enum by its key. So a criterion can be handed a letter it does
- * not define, and the scorer and the breakdown must agree on what that means.
+ * One lookup, used by both `scoreFromBands` and `resultFromVerdict`. They each had their
+ * own before, and disagreed: given a letter a criterion did not define, the scorer found
+ * nothing and awarded 0 while the breakdown fell through to `bands.at(-1)` and printed D.
+ * A single function cannot contradict itself, which is the whole point of it — the
+ * response schema has to present ONE band enum for every criterion, because the criteria
+ * come back as a homogeneous array and a JSON schema cannot vary an item's enum by key.
  *
- * A starred letter falls back to its unstarred form: A* and A are the same 5 points and
- * the star is a diagnostic, so a Formale Richtigkeit returned as A* is an A. Before this
- * existed the two callers disagreed — the scorer found no band and awarded 0, the
- * breakdown fell through to `bands.at(-1)` and printed D — so a flawless B2 letter marked
- * A* throughout scored 30/45 with a D against perfect grammar.
+ * Returns undefined for an unknown or absent letter, leaving the caller to decide: the
+ * scorer treats it as no marks, the breakdown as the bottom band.
  */
 export function resolveBand(
   criterion: CriterionDefinition,
   letter: BandLetter | undefined,
 ): Band | undefined {
   if (letter === undefined) return undefined;
-  const exact = criterion.bands.find((b) => b.band === letter);
-  if (exact) return exact;
-  const unstarred = letter.replace("*", "") as BandLetter;
-  return unstarred === letter
-    ? undefined
-    : criterion.bands.find((b) => b.band === unstarred);
+  return criterion.bands.find((b) => b.band === letter);
 }
 
 /** How many Inhaltspunkte are marked for a task offering `offered` of them. */

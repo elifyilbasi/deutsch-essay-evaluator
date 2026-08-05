@@ -97,9 +97,13 @@ export function buildResponseSchema(rubric: LevelRubric) {
     properties: {
       themaVerfehlt: {
         type: Type.BOOLEAN,
+        // The Situierung caveat matters wherever a level draws that distinction: telc B1
+        // and B2 both grade the first criterion D for a text on the right topic in the
+        // wrong situation, WITHOUT zeroing the rest. Conflating the two here would turn a
+        // partial loss into a nil score.
         description: `True only if the text misses the topic entirely (Thema verfehlt) - i.e. it is not a response to this task at all.${
           rubric.themaVerfehltZeroesTask
-            ? " This zeroes the whole letter, so reserve it for genuine cases."
+            ? " This zeroes the whole letter, so reserve it for genuine cases. A text that takes up the right topic but answers the wrong Situierung is NOT Thema verfehlt: leave this false and grade the task-achievement criterion D instead, so the language criteria still count."
             : " At this level it carries no automatic penalty; it is recorded, not scored."
         }`,
       },
@@ -317,7 +321,7 @@ export function buildPrompt(task: TaskContext) {
   // Not "no Betreff is required" - several papers do advise one. The point is that
   // it is not a Textsortenmerkmal here, so its absence must not cost marks.
   const subjectText = requiresSubject
-    ? "The task requires a subject line (Betreff). Note whether one is present and informative."
+    ? "The task asks for a subject line (Betreff). Note in your comment whether one is present and informative, as advice — but no criterion marks it, so its absence must not withhold a band on its own."
     : "A subject line (Betreff) is not a required feature of this Textsorte. Do not withhold marks if there is none, even if the task's own advice mentions one.";
 
   const salutationText = stimulusAuthor
