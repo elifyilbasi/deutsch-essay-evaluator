@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { getRubric } from "@/lib/rubrics";
 import { buildPrompt, buildResponseSchema } from "@/lib/gemini";
-import { maxRawScore, scoreFromBands } from "@/lib/rubrics/types";
+import { maxRawScore, resolveBand, scoreFromBands } from "@/lib/rubrics/types";
 import { checkEssayLength } from "@/lib/essayLimits";
 import { representativeTask } from "./fixtures";
 
@@ -136,5 +136,37 @@ describe("telc B2 length", () => {
   it("still enforces the character stop, which is the real defence", () => {
     const huge = "a".repeat(6000);
     assert.ok(checkEssayLength(huge, B2, 1));
+  });
+});
+
+describe("a band a criterion does not define", () => {
+  // The response schema offers ONE band enum for every criterion, because the criteria
+  // come back as a homogeneous array. So the model can hand Formale Richtigkeit an A*,
+  // which that criterion does not define — and it must not cost the letter 5 points.
+  it("scores A* on a criterion without one exactly as A", () => {
+    const starred = scoreFromBands({
+      rubric: B2,
+      bands: { schreibanlass: "A", kommunikativeGestaltung: "A", formaleRichtigkeit: "A*" },
+      themaVerfehlt: false,
+      leitpunktCount: 4,
+    });
+    assert.equal(starred.total, 45, "a flawless letter must not lose marks to a spelling of A");
+  });
+
+  it("shows it as A rather than falling through to D", () => {
+    const criterion = B2.criteria.find((c) => c.key === "formaleRichtigkeit")!;
+    assert.equal(resolveBand(criterion, "A*")?.band, "A");
+    assert.equal(resolveBand(criterion, "A*")?.points, 5);
+  });
+
+  it("still resolves a letter the criterion does define", () => {
+    const criterion = B2.criteria.find((c) => c.key === "schreibanlass")!;
+    assert.equal(resolveBand(criterion, "A*")?.band, "A*");
+    assert.equal(resolveBand(criterion, "C")?.points, 1);
+  });
+
+  it("resolves nothing for an absent verdict, so the caller can fall back", () => {
+    const criterion = B2.criteria.find((c) => c.key === "formaleRichtigkeit")!;
+    assert.equal(resolveBand(criterion, undefined), undefined);
   });
 });

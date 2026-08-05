@@ -137,7 +137,7 @@ function buildTask(args: Args): TaskContext {
   }
 
   const essay = readEssay(args.essayPath);
-  return {
+  const task = {
     institute: args.institute,
     level: args.level,
     rubric,
@@ -145,7 +145,32 @@ function buildTask(args: Args): TaskContext {
     wordCount: countWords(essay),
     ...fallback,
     ...override,
-  } as TaskContext;
+  };
+
+  // Checked rather than cast. `as TaskContext` made a --task file with only some of the
+  // fields typecheck, and the gaps surfaced as `undefined` interpolated into the prompt —
+  // "THE LEITPUNKTE" with nothing under it, an undefined instruction line — which the
+  // model answers anyway, so the run costs a real call and returns a confident verdict on
+  // a task that was never fully stated.
+  const required: (keyof TaskContext)[] = [
+    "promptTitle",
+    "taskIntro",
+    "instructions",
+    "leitpunkte",
+    "register",
+  ];
+  const missing = required.filter((key) => task[key as keyof typeof task] === undefined);
+  if (missing.length > 0) {
+    throw new Error(
+      `The task is missing ${missing.join(", ")}. A --task file is merged over the ` +
+        `built-in sample, so supply those fields (or drop --task to use the sample as is).`,
+    );
+  }
+  if (!Array.isArray(task.leitpunkte) || task.leitpunkte.length === 0) {
+    throw new Error("The task lists no Leitpunkte, so there is nothing to mark coverage against.");
+  }
+
+  return task as TaskContext;
 }
 
 const bar = (label: string) => `\n${label}\n${"-".repeat(label.length)}`;

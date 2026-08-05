@@ -21,7 +21,14 @@ import { asPercent, levelSlots, type LevelProgress } from "@/lib/progress";
  * collapses to a single line. Ladder order throughout, so the card still reads the way a
  * learner progresses.
  */
-export function ProgressSummary({ progress }: { progress: LevelProgress[] }) {
+export function ProgressSummary({
+  progress,
+  /** Whole-history attempt counts, so an empty level is not miscalled "never attempted". */
+  totalByLevel,
+}: {
+  progress: LevelProgress[];
+  totalByLevel?: Partial<Record<Level, number>>;
+}) {
   if (progress.length === 0) return null;
 
   return (
@@ -30,9 +37,9 @@ export function ProgressSummary({ progress }: { progress: LevelProgress[] }) {
         <CardTitle className="text-base">Your progress</CardTitle>
       </CardHeader>
       <CardContent className="divide-y">
-        {levelSlots(progress).map(({ level, progress: p }) =>
+        {levelSlots(progress, totalByLevel).map(({ level, progress: p, attemptsOutsideWindow }) =>
           p === null ? (
-            <UnattemptedRow key={level} level={level} />
+            <UnattemptedRow key={level} level={level} olderAttempts={attemptsOutsideWindow} />
           ) : hasScoreHistory(p.attempts) ? (
             <ChartedLevel key={level} level={p} />
           ) : (
@@ -99,18 +106,36 @@ function CompactRow({ level }: { level: LevelProgress }) {
  * A level that is offered but not yet attempted. It keeps its line rather than being
  * omitted: an empty rung is what tells a learner where the ladder goes next.
  */
-function UnattemptedRow({ level }: { level: Level }) {
+function UnattemptedRow({
+  level,
+  /**
+   * Attempts at this level older than the window the dashboard reads. Only zero means
+   * the level has genuinely never been tried; anything else and "No attempts yet" would
+   * be telling a learner their own work does not exist.
+   */
+  olderAttempts,
+}: {
+  level: Level;
+  olderAttempts: number;
+}) {
   return (
     <Row
       level={level}
       value={<span className="text-muted-foreground/50">—</span>}
       trailing={
-        <span>
-          No attempts yet ·{" "}
-          <Link href={`/write?level=${level}`} className="underline">
-            write one
-          </Link>
-        </span>
+        olderAttempts > 0 ? (
+          <span>
+            {olderAttempts} earlier attempt{olderAttempts === 1 ? "" : "s"}, none recent
+            enough to chart
+          </span>
+        ) : (
+          <span>
+            No attempts yet ·{" "}
+            <Link href={`/write?level=${level}`} className="underline">
+              write one
+            </Link>
+          </span>
+        )
       }
     />
   );

@@ -17,6 +17,7 @@ import { safeJson, errorMessage } from "@/lib/safeJson";
 import {
   INSTITUTES,
   LEVELS,
+  parseLevelHint,
   parseWriteParams,
   visibleCountFor,
 } from "@/lib/writeParams";
@@ -77,6 +78,11 @@ function WriteWizard() {
    */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const revise = useMemo(() => parseWriteParams(searchParams), []);
+  // A bare ?level= link (the progress card's "write one") carries no task, so it is
+  // not a revise link — but it should still open the wizard on that level. Read once for
+  // the same reason as above: it feeds a state initialiser, not an effect.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const levelHint = useMemo(() => parseLevelHint(searchParams), []);
   /** Set while the URL still describes the state, so we know to clean it and can tell
    * the user if the task it pointed at has gone. */
   const urlPromptId = useRef<string | null>(revise?.promptId ?? null);
@@ -84,7 +90,7 @@ function WriteWizard() {
   /** Idempotency key for the current attempt; see handleContentChange. */
   const submissionId = useRef<string | null>(null);
   const [institute, setInstitute] = useState<Institute>(revise?.institute ?? "TELC");
-  const [level, setLevel] = useState<Level | null>(revise?.level ?? null);
+  const [level, setLevel] = useState<Level | null>(revise?.level ?? levelHint);
   const [prompts, setPrompts] = useState<PromptSummary[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(
     revise?.promptId ?? null,

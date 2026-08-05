@@ -219,9 +219,10 @@ function driftedFields(seed: SeededTask, row: Record<SeededField, unknown>): See
  * removes it from a fresh database but leaves every existing one still serving it.
  * Two stale A2 tasks reached the bank exactly that way.
  *
- * Scoped to the (institute, level) pairs the files actually populate. The seed knows
- * about telc A1, A2 and B1 and says nothing whatsoever about Goethe or B2 — so a
- * Prompt at a level with no seed entries is out of scope and is never touched, and
+ * Scoped to the (institute, level) pairs the files actually populate — derived from the
+ * entries themselves, never a hardcoded list, so adding a level's file brings it into
+ * scope automatically. It now covers telc A1, A2, B1 and B2 and still says nothing about
+ * Goethe — so a Prompt at a level with no seed entries is out of scope and never touched, and
  * "not in the seed files" only ever means "absent from a level the seed defines".
  * A level therefore cannot be emptied by an import going missing: with no entries it
  * is not a scope at all.

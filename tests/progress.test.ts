@@ -255,3 +255,33 @@ describe("asPercent", () => {
     assert.equal(asPercent(1), 100);
   });
 });
+
+describe("levelSlots window awareness", () => {
+  it("distinguishes never attempted from nothing in the window", () => {
+    // The dashboard reads only the most recent essays. A level whose work is all older
+    // than that window used to render "No attempts yet" to someone who had done twenty.
+    const slots = levelSlots(progressByLevel([attempt("B1", 1, 30)]), { A1: 20, B1: 1 });
+    const a1 = slots.find((s) => s.level === "A1")!;
+    const a2 = slots.find((s) => s.level === "A2")!;
+    assert.equal(a1.progress, null);
+    assert.equal(a1.attemptsOutsideWindow, 20, "A1 has history, just not recent history");
+    assert.equal(a2.attemptsOutsideWindow, 0, "A2 has genuinely never been attempted");
+  });
+
+  it("counts nothing as outside the window when the window holds it all", () => {
+    const slots = levelSlots(progressByLevel([attempt("B1", 1, 30)]), { B1: 1 });
+    assert.equal(slots.find((s) => s.level === "B1")!.attemptsOutsideWindow, 0);
+  });
+
+  it("never reports a negative remainder", () => {
+    // The counts and the window are separate queries; a submission landing between them
+    // would otherwise produce "-1 earlier attempts".
+    const slots = levelSlots(progressByLevel([attempt("B1", 1, 30), attempt("B1", 2, 40)]), { B1: 1 });
+    assert.equal(slots.find((s) => s.level === "B1")!.attemptsOutsideWindow, 0);
+  });
+
+  it("defaults to zero when the caller supplies no counts", () => {
+    const slots = levelSlots(progressByLevel([]));
+    assert.ok(slots.every((s) => s.attemptsOutsideWindow === 0));
+  });
+});

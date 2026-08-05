@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { contentPointMarks, scoreFromBands } from "@/lib/rubrics/types";
+import { contentPointMarks, resolveBand, scoreFromBands } from "@/lib/rubrics/types";
 import type {
   BandLetter,
   LeitpunktStatus,
@@ -585,9 +585,13 @@ export function resultFromVerdict(
   });
 
   const criteriaScores: CriterionScore[] = rubric.criteria.map((criterion) => {
-    const chosen = bands[criterion.key];
+    // The same resolution the scorer uses, so the printed band and the points it is
+    // shown beside can never come from different lookups. `at(-1)` remains the fallback
+    // for a criterion the examiner omitted entirely, which scores 0 and so reads as the
+    // bottom band — but it must not catch a letter this criterion simply spells
+    // differently, which is what made an A* display as D.
     const band =
-      criterion.bands.find((b) => b.band === chosen) ?? criterion.bands.at(-1)!;
+      resolveBand(criterion, bands[criterion.key]) ?? criterion.bands.at(-1)!;
     const comment =
       verdict.criteriaVerdicts?.find((v) => v.key === criterion.key)?.comment ??
       "";

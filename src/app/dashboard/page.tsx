@@ -33,6 +33,18 @@ export default async function DashboardPage() {
     },
   });
 
+  // Counted over the whole history, not the RECENT_LIMIT window above, so a level whose
+  // essays are all older than that window is not reported as never attempted. Grouped in
+  // the database rather than fetched, so it stays one cheap row per level.
+  const totals = await prisma.essay.groupBy({
+    by: ["level"],
+    where: { userId },
+    _count: { _all: true },
+  });
+  const totalByLevel = Object.fromEntries(
+    totals.map((row) => [row.level, row._count._all]),
+  );
+
   const progress = progressByLevel(essays);
 
   return (
@@ -42,7 +54,7 @@ export default async function DashboardPage() {
         <Button nativeButton={false} render={<Link href="/write">Write new essay</Link>} />
       </div>
 
-      <ProgressSummary progress={progress} />
+      <ProgressSummary progress={progress} totalByLevel={totalByLevel} />
 
       {essays.length === 0 ? (
         <Card>

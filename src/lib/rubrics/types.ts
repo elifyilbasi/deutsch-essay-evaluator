@@ -161,6 +161,34 @@ export function maxRawScore(rubric: LevelRubric, leitpunktCount = 0): number {
   return criteriaMax + contentMax;
 }
 
+/**
+ * The band a criterion actually awards for the letter an examiner returned.
+ *
+ * A grid may offer a letter on some criteria and not on others — telc B2 allows A* "in
+ * den beiden ersten Kriterien" only — but the response schema has to present ONE enum to
+ * the model, because the criteria come back as a homogeneous array and a JSON schema
+ * cannot vary an item's enum by its key. So a criterion can be handed a letter it does
+ * not define, and the scorer and the breakdown must agree on what that means.
+ *
+ * A starred letter falls back to its unstarred form: A* and A are the same 5 points and
+ * the star is a diagnostic, so a Formale Richtigkeit returned as A* is an A. Before this
+ * existed the two callers disagreed — the scorer found no band and awarded 0, the
+ * breakdown fell through to `bands.at(-1)` and printed D — so a flawless B2 letter marked
+ * A* throughout scored 30/45 with a D against perfect grammar.
+ */
+export function resolveBand(
+  criterion: CriterionDefinition,
+  letter: BandLetter | undefined,
+): Band | undefined {
+  if (letter === undefined) return undefined;
+  const exact = criterion.bands.find((b) => b.band === letter);
+  if (exact) return exact;
+  const unstarred = letter.replace("*", "") as BandLetter;
+  return unstarred === letter
+    ? undefined
+    : criterion.bands.find((b) => b.band === unstarred);
+}
+
 /** How many Inhaltspunkte are marked for a task offering `offered` of them. */
 function countedPoints(content: ContentPointScoring, offered: number): number {
   return content.counted === undefined ? offered : Math.min(content.counted, offered);
@@ -243,7 +271,9 @@ export function scoreFromBands(params: {
   }
 
   let raw = rubric.criteria.reduce((sum, criterion) => {
-    const band = criterion.bands.find((b) => b.band === bands[criterion.key]);
+    // Resolved, not matched exactly: a letter the criterion does not define still has
+    // to score what the grid intends. See resolveBand.
+    const band = resolveBand(criterion, bands[criterion.key]);
     return sum + (band?.points ?? 0);
   }, 0);
 

@@ -144,7 +144,17 @@ export function plotWindow(attempts: Attempt[], size = 14): Attempt[] {
   return size > 0 ? attempts.slice(-size) : [];
 }
 
-export type LevelSlot = { level: Level; progress: LevelProgress | null };
+export type LevelSlot = {
+  level: Level;
+  progress: LevelProgress | null;
+  /**
+   * Attempts at this level that the caller's window did not reach. The dashboard reads
+   * only the most recent essays, so an empty `progress` means "none in that window", not
+   * "never attempted" — and a cell that says "No attempts yet" to someone with twenty
+   * older essays at that level is simply wrong. Zero when the caller supplies no counts.
+   */
+  attemptsOutsideWindow: number;
+};
 
 /**
  * One slot per level the write wizard actually offers, in ladder order, whether or not
@@ -157,12 +167,30 @@ export type LevelSlot = { level: Level; progress: LevelProgress | null };
  *
  * Reads LEVELS so the grid and the wizard cannot disagree about which levels exist.
  */
-export function levelSlots(progress: LevelProgress[]): LevelSlot[] {
+export function levelSlots(
+  progress: LevelProgress[],
+  /**
+   * Total attempts per level over the learner's whole history, where the caller can
+   * cheaply supply it. Without it a slot cannot tell "never attempted" from "nothing in
+   * the window I read", and the card claims the former.
+   */
+  totalByLevel: Partial<Record<Level, number>> = {},
+): LevelSlot[] {
   const byLevel = new Map(progress.map((p) => [p.level, p]));
-  return LEVELS.filter((l) => l.enabled).map((l) => ({
-    level: l.value as Level,
-    progress: byLevel.get(l.value as Level) ?? null,
-  }));
+  return LEVELS.filter((l) => l.enabled).map((l) => {
+    const level = l.value as Level;
+    const inWindow = byLevel.get(level) ?? null;
+    return {
+      level,
+      progress: inWindow,
+      // Floored at zero: the counts and the window are separate queries, so a submission
+      // landing between them must not produce a negative remainder.
+      attemptsOutsideWindow: Math.max(
+        0,
+        (totalByLevel[level] ?? 0) - (inWindow?.totalAttempts ?? 0),
+      ),
+    };
+  });
 }
 
 /** Whole percent, for display. */

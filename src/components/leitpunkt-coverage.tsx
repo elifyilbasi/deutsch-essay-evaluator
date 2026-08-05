@@ -47,8 +47,12 @@ export function LeitpunktCoverageList({
 
   return (
     <div className="space-y-3">
+      {/* Clamped, because a level can ask for fewer points than it prints: telc B2
+          requires three of four, so covering all four read as "4 of 3 required points".
+          The surplus is real work and is reported, just not as part of the requirement. */}
       <p className="text-sm text-muted-foreground">
-        {covered} of {required} required points fully covered
+        {Math.min(covered, required)} of {required} required points fully covered
+        {covered > required && ` · ${covered - required} more beyond the requirement`}
         {ownCovered > 0 &&
           ` · ${ownCovered} of them ${ownCovered === 1 ? "an aspect" : "aspects"} of your own`}
       </p>

@@ -54,6 +54,20 @@ function enabledValue<T extends string>(
  * is null and the wizard starts from scratch — a half-valid link should not drop the
  * user somewhere they did not ask to be, and a malformed one is not their fault.
  */
+/**
+ * A level to start the wizard on, from a `?level=` link with no task attached.
+ *
+ * Separate from `parseWriteParams`, which is all-or-nothing by design: a half-valid
+ * "revise this task" link must not drop someone on a task they did not ask for. A bare
+ * level is a different, weaker claim — "start here" — and refusing it made the progress
+ * card's "write one" link land on an unfilled step 1, throwing the level away.
+ *
+ * Still gated on `enabled`, so a link cannot reach a level the wizard would not offer.
+ */
+export function parseLevelHint(params: ParamReader): Level | null {
+  return enabledValue(LEVELS, params.get("level"));
+}
+
 export function parseWriteParams(params: ParamReader): WriteParams | null {
   const institute = enabledValue(INSTITUTES, params.get("institute"));
   const level = enabledValue(LEVELS, params.get("level"));
