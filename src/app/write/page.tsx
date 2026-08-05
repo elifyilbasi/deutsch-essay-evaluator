@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskBrief } from "@/components/task-brief";
-import { countWords } from "@/lib/wordCount";
+import { countWords, formatWordRange, wordsOutOfRange } from "@/lib/wordCount";
 import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
 import { safeJson, errorMessage } from "@/lib/safeJson";
@@ -38,7 +38,7 @@ type PromptSummary = {
   register: "DU" | "SIE";
   requiresSubject: boolean;
   minWords: number;
-  maxWords: number;
+  maxWords: number | null;
   timeLimitMinutes: number | null;
   practice: { attemptCount: number; bestScore: number; maxScore: number } | null;
 };
@@ -411,7 +411,7 @@ function WriteWizard() {
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{p.taskIntro}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {p.leitpunkte.length} Punkte &middot; {p.minWords}-{p.maxWords} Wörter
+                      {p.leitpunkte.length} Punkte &middot; {formatWordRange(p.minWords, p.maxWords)} Wörter
                       &middot; {p.register === "SIE" ? "formell (Sie)" : "informell (du)"}
                     </p>
                   </button>
@@ -511,7 +511,7 @@ function WriteWizard() {
               <div className="flex items-center gap-4">
                 <span
                   className={`text-sm ${
-                    wordCount < selectedPrompt.minWords || wordCount > selectedPrompt.maxWords
+                    wordsOutOfRange(wordCount, selectedPrompt.minWords, selectedPrompt.maxWords)
                       ? "text-destructive"
                       : "text-muted-foreground"
                   }`}

@@ -7,7 +7,7 @@ import {
   exceedsBodyLimit,
   MAX_BODY_BYTES,
 } from "@/lib/essayLimits";
-import { countWords } from "@/lib/wordCount";
+import { countWords, formatWordRange, wordsOutOfRange } from "@/lib/wordCount";
 import { telcRubrics } from "@/lib/rubrics/telc";
 
 /**
@@ -84,5 +84,26 @@ describe("body size gate", () => {
   it("allows a missing or unparseable header through to the real check", () => {
     assert.equal(exceedsBodyLimit(null), false);
     assert.equal(exceedsBodyLimit("not-a-number"), false);
+  });
+});
+
+describe("word range display", () => {
+  it("prints a floor without a ceiling as a minimum, not a range", () => {
+    // "150-null" is what a raw interpolation produced, and inventing a ceiling to avoid
+    // it would colour a legitimate long B2 letter as an error.
+    assert.equal(formatWordRange(150, null), "mindestens 150");
+    assert.equal(formatWordRange(80, 100), "80-100");
+  });
+
+  it("still calls a text short when the level sets no ceiling", () => {
+    // The floor is the half of the requirement B2 does state.
+    assert.equal(wordsOutOfRange(149, 150, null), true);
+    assert.equal(wordsOutOfRange(150, 150, null), false);
+  });
+
+  it("never calls a text long when the level sets no ceiling", () => {
+    assert.equal(wordsOutOfRange(400, 150, null), false);
+    // ... but does where the level prints one.
+    assert.equal(wordsOutOfRange(101, 80, 100), true);
   });
 });

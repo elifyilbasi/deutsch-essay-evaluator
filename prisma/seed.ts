@@ -4,6 +4,7 @@ import type { SeedPrompt } from "./seed-types";
 import { telcA1Prompts } from "./seed-telc-a1";
 import { telcA2Prompts } from "./seed-telc-a2";
 import { telcB1Prompts } from "./seed-telc-b1";
+import { telcB2Prompts } from "./seed-telc-b2";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -284,7 +285,7 @@ async function prune(allPrompts: SeededTask[]) {
 
 async function main() {
   // `sourceFile` is provenance for us, not a column - drop it before insert.
-  const transcribed = [...telcA1Prompts, ...telcA2Prompts, ...telcB1Prompts].map((entry) => {
+  const transcribed = [...telcA1Prompts, ...telcA2Prompts, ...telcB1Prompts, ...telcB2Prompts].map((entry) => {
     const { sourceFile, ...prompt } = entry;
     void sourceFile;
     return prompt;

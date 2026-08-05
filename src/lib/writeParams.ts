@@ -26,7 +26,7 @@ export const LEVELS: { value: Level; label: string; enabled: boolean }[] = [
   { value: "A1", label: "A1", enabled: true },
   { value: "A2", label: "A2", enabled: true },
   { value: "B1", label: "B1", enabled: true },
-  { value: "B2", label: "B2", enabled: false },
+  { value: "B2", label: "B2", enabled: true },
 ];
 
 export type WriteParams = {

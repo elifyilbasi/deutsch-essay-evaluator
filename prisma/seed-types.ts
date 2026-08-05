@@ -17,7 +17,8 @@ export type SeedPrompt = {
   register: "DU" | "SIE";
   requiresSubject: boolean;
   minWords: number;
-  maxWords: number;
+  /** Null where the level prints a floor and no ceiling — telc B2 asks only for 150+. */
+  maxWords: number | null;
   /** Which file in exam-materials/ this was transcribed from. Not a DB column. */
   sourceFile?: string;
 };

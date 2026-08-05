@@ -22,8 +22,21 @@ describe("parseWriteParams", () => {
     });
   });
 
-  it("rejects a level that is not enabled yet", () => {
-    assert.equal(parseWriteParams(params({ ...valid, level: "B2" })), null);
+  it("follows the list rather than a hardcoded level", () => {
+    // This used to assert on B2 by name and broke the day B2 shipped, which is the very
+    // regression the file header warns about — from the other side. Driven off LEVELS,
+    // it keeps testing the guard as levels are switched on, and starts covering the next
+    // disabled one the moment it is added.
+    for (const { value, enabled } of LEVELS) {
+      const parsed = parseWriteParams(params({ ...valid, level: value }));
+      assert.equal(
+        parsed !== null,
+        enabled,
+        `${value} is ${enabled ? "enabled" : "disabled"} in LEVELS but the parser ${
+          parsed ? "accepted" : "rejected"
+        } it`,
+      );
+    }
   });
 
   it("rejects a level that is not on the ladder at all", () => {

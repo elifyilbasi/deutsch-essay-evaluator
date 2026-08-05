@@ -126,7 +126,8 @@ model Prompt {
   requiresSubject Boolean  @default(false)
 
   minWords Int
-  maxWords Int
+  /// Null where the level prints a floor and no ceiling (telc B2: "mindestens 150 Wörter").
+  maxWords Int?
   isActive Boolean @default(true)
 
   essays Essay[]

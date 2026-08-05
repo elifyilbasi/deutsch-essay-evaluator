@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { formatWordRange, wordsOutOfRange as isOutOfRange } from "@/lib/wordCount";
 
 /**
  * What the candidate was actually asked to do: the instruction line, the numbered
@@ -20,7 +21,8 @@ export type TaskBriefProps = {
   requiresSubject: boolean;
   stimulusAuthor: string | null;
   minWords: number;
-  maxWords: number;
+  /** Null where the level sets no ceiling, e.g. telc B2. */
+  maxWords: number | null;
   timeLimitMinutes: number | null;
   /** Set on the feedback page to show what was written against what was asked. */
   actualWordCount?: number;
@@ -47,8 +49,7 @@ export function TaskBrief({
   actualSeconds,
 }: TaskBriefProps) {
   const wordsOutOfRange =
-    actualWordCount !== undefined &&
-    (actualWordCount < minWords || actualWordCount > maxWords);
+    actualWordCount !== undefined && isOutOfRange(actualWordCount, minWords, maxWords);
   const overTime =
     actualSeconds !== undefined &&
     timeLimitMinutes !== null &&
@@ -73,7 +74,7 @@ export function TaskBrief({
         {requiresSubject && <Badge variant="outline">Betreff nötig</Badge>}
         {stimulusAuthor && <Badge variant="outline">Antwort an {stimulusAuthor}</Badge>}
         <Badge variant={wordsOutOfRange ? "destructive" : "outline"}>
-          {minWords}-{maxWords} Wörter
+          {formatWordRange(minWords, maxWords)} Wörter
           {actualWordCount !== undefined && ` · geschrieben: ${actualWordCount}`}
         </Badge>
         {timeLimitMinutes !== null && (

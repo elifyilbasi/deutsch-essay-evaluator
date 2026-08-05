@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { telcRubrics } from "@/lib/rubrics";
+import { formatWordRange } from "@/lib/wordCount";
 import { telcA1Prompts } from "../prisma/seed-telc-a1";
 import { telcA2Prompts } from "../prisma/seed-telc-a2";
 import { telcB1Prompts } from "../prisma/seed-telc-b1";
+import { telcB2Prompts } from "../prisma/seed-telc-b2";
 import type { SeedPrompt } from "../prisma/seed-types";
 
 /**
@@ -25,6 +27,7 @@ const banks: Array<[string, SeedPrompt[]]> = [
   ["A1", telcA1Prompts],
   ["A2", telcA2Prompts],
   ["B1", telcB1Prompts],
+  ["B2", telcB2Prompts],
 ];
 
 describe("every seeded task agrees with its level's rubric", () => {
@@ -33,11 +36,14 @@ describe("every seeded task agrees with its level's rubric", () => {
       for (const task of bank) {
         const rubric = telcRubrics[task.level];
         assert.ok(rubric, `${task.level} "${task.title}" has no rubric`);
+        // Formatted rather than interpolated raw: a level may set a floor and no
+        // ceiling, and "150-null" is not a sentence anyone wants in a failure message.
+        const stated = formatWordRange(task.minWords, task.maxWords);
+        const required = formatWordRange(rubric.minWords, rubric.maxWords);
         assert.equal(
-          `${task.minWords}-${task.maxWords}`,
-          `${rubric.minWords}-${rubric.maxWords}`,
-          `${task.level} "${task.title}" states ${task.minWords}-${task.maxWords} ` +
-            `where the ${task.level} rubric states ${rubric.minWords}-${rubric.maxWords}`,
+          stated,
+          required,
+          `${task.level} "${task.title}" states ${stated} where the ${task.level} rubric states ${required}`,
         );
       }
     });
