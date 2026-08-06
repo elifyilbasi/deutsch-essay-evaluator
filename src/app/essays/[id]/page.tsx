@@ -73,9 +73,7 @@ export default async function EssayDetailPage({
             </Link>
           </div>
         </div>
-        <p className="mt-2 max-w-[70ch] text-sm text-muted-foreground">
-          {essay.prompt.taskIntro}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{essay.prompt.taskIntro}</p>
       </div>
 
       {essay.prompt.stimulusText && (
@@ -142,16 +140,14 @@ export default async function EssayDetailPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-w-[70ch]">
-            {evaluation ? (
-              <AnnotatedEssay
-                essay={essay.content}
-                corrections={evaluation.corrections as unknown as Correction[]}
-              />
-            ) : (
-              <p className="whitespace-pre-wrap text-sm">{essay.content}</p>
-            )}
-          </div>
+          {evaluation ? (
+            <AnnotatedEssay
+              essay={essay.content}
+              corrections={evaluation.corrections as unknown as Correction[]}
+            />
+          ) : (
+            <p className="whitespace-pre-wrap text-sm">{essay.content}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -167,7 +163,7 @@ export default async function EssayDetailPage({
                   Der gesamte Brief wurde mit 0 Punkten bewertet: {evaluation.zeroedReason}.
                 </p>
               )}
-              <p className="max-w-[70ch] text-sm">{evaluation.summaryFeedback}</p>
+              <p className="text-sm">{evaluation.summaryFeedback}</p>
               {/* Per level: the parts, totals and pass rules differ between them. */}
               {rubric && (
                 <p className="text-xs text-muted-foreground">{rubric.scaleNote}</p>
