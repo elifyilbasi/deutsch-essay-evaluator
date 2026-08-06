@@ -1,10 +1,28 @@
 /**
- * TELC B1 "Schriftlicher Ausdruck" tasks, transcribed from the practice papers in
+ * TELC B1 "Schriftlicher Ausdruck" tasks, modelled on the practice papers in
  * exam-materials/telc/b1/ (telc-uebungstest-01..17.png).
  *
- * Transcribed as printed, including the papers' own typos (e.g. "Musikfestvial",
- * "Grätschet"), so what a learner sees matches the paper they'll sit. Titles are
- * ours — the originals are all just "Schriftlicher Ausdruck".
+ * As in the B2 bank, the stimulus texts here are ORIGINAL. A B1 task prints a personal
+ * letter of well over a hundred words, and seventeen of those transcribed into a database
+ * that gets deployed is precisely what exam-materials/README.md warns against.
+ *
+ * Each letter was written from the task's *situation* only - a friend has found a garden
+ * and offers to share it - rather than from the paper's sentences, so every name, town,
+ * job, date and detail below is invented and the wording is nowhere a paraphrase of the
+ * source. Paraphrasing was the first attempt and it was not enough: a rewrite that keeps
+ * the original's sentence order and swaps individual words still reproduces the
+ * expression, which is what copyright covers. The Leitpunkte are written to fit these
+ * letters rather than the papers'.
+ *
+ * What the format keeps, because format is not expression: the Brief-then-Aufgabe shape,
+ * the informal register, the `Liebe(r) ........` opening the papers use so the candidate
+ * fills in a name, four Leitpunkte, and the everyday subjects a B1 candidate is expected
+ * to handle.
+ *
+ * `sourceFile` therefore records the paper each task's SHAPE follows, not a paper it was
+ * copied from. Kept so the bank can be checked against the real spread of task types.
+ *
+ * Titles are ours — the originals are all just "Schriftlicher Ausdruck".
  *
  * Every task here is B1, informal (du), four Leitpunkte, 80-100 words, 30 minutes.
  *
@@ -34,20 +52,21 @@ export const telcB1Prompts: SeedPrompt[] = [
     stimulusAuthor: "Andreas",
     stimulusText: `Liebe(r) ........
 
-es tut mir wirklich leid, dass ich dir schon so lange nicht geschrieben habe. Bei mir ist im letzten Monat ziemlich viel los gewesen.
+ich melde mich endlich wieder - die letzten Wochen waren bei mir ziemlich chaotisch.
 
-Vor drei Wochen bin ich nämlich in eine neue Wohnung gezogen, weil die alte für mich zu klein war. Mittlerweile habe ich mich schon sehr schön eingerichtet, mit ein paar neuen Möbeln usw. Ich fühle mich wirklich wohl! Hast du nicht Lust. Im Sommer zu mir zu Besuch zu kommen?
+Der Grund: Ich habe die Wohnung gewechselt. In der alten war das Bad winzig, und die Heizung fiel jeden Winter mindestens einmal aus. Die neue liegt zwei Straßen weiter, hat Fenster nach Süden und einen Abstellraum für mein Fahrrad. Die Küche haben mein Bruder und ich selbst eingebaut; wir haben vier Wochenenden dafür gebraucht.
 
-In meiner neuen Wohnung habe ich jetzt auch ein kleines Arbeitszimmer für meine ganzen Bücher und den Schreibtisch mit dem Computer. Wie ist das bei dir? Machst du eigentlich viel am Computer?
-Lass doch mal wieder was von dir hören!
+Am meisten freut mich der eigene Schreibtisch. Bisher habe ich alles am Küchentisch erledigt. Jetzt steht dort der Rechner, und abends bearbeite ich meine Fotos. Sitzt du auch viel am Rechner, oder eher selten?
 
-Liebe Grüße und bis bald
+Ab Juni habe ich Platz für Gäste. Kommst du mal vorbei?
+
+Herzlich
 Andreas`,
-    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu den folgenden vier Punkten:",
+    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Ihre Erfahrungen mit dem Computer",
-      "Etwas über Ihre Wohnung",
-      "Ob Sie Andreas besuchen möchten",
+      "Wie oft und wofür Sie den Rechner benutzen",
+      "Etwas über Ihre eigene Wohnung",
+      "Ob Sie Andreas im Juni besuchen möchten",
       "Was es bei Ihnen Neues gibt",
     ],
     requiresSubject: false,
@@ -56,21 +75,24 @@ Andreas`,
   {
     ...base,
     title: "Der neue Kollege aus Spanien",
-    taskIntro: "Sie haben im Urlaub Andreas kennengelernt. Er hat Ihnen folgende E-Mail geschrieben:",
+    taskIntro:
+      "Sie haben im Urlaub Andreas kennengelernt. Er hat Ihnen folgende E-Mail geschrieben:",
     stimulusAuthor: "Andreas",
     stimulusText: `Liebe(r) ........
 
-Heute habe ich Zeit, dir ein paar Zeilen zu schreiben. Der Urlaub war so schön, aber seit ich zurück bin, habe ich im Büro sehr viel Arbeit. Bestimmt brauche ich schon bald wieder Urlaub!
-Während ich weg war, hat sich hier übrigens einiges geändert: Es gibt einen neuen Kollegen, er heißt Roberto. Was aber die größte Veränderung ist:
-Er arbeitet mit mir in meinem Büro, das heißt, ich habe endlich jemanden, mit dem ich mich zwischendurch auch ein bisschen unterhalten kann! Roberto ist aus Spanien hierher gezogen. Er kennt noch niemanden hier, außer mir natürlich, und ist meistens allein. Denkst du, dass ich ihn und ein paar andere Arbeitskollegen einmal einladen sollte? Was würdest du tun? Na gut, für heute muss ich Schluss machen. Melde dich doch bald einmal bei mir!
+endlich ein ruhiger Moment zum Schreiben. Kaum war ich zurück, lag auf meinem Schreibtisch Arbeit für zwei Wochen - so fühlt es sich jedenfalls an.
+
+In unserer Abteilung hat jemand angefangen: Miguel, im Frühjahr aus Sevilla hergezogen. Seit Montag teilen wir uns ein Zimmer. Nach Jahren allein finde ich das angenehm, auch wenn ich mich erst daran gewöhnen muss, dass jemand mithört, wenn ich telefoniere.
+
+Nur hat Miguel außerhalb der Firma kaum Kontakte. Er sagt, am Wochenende sei ihm die Stadt zu still. Ich überlege, ein paar Leute aus der Abteilung zu mir einzuladen, damit er jemanden kennenlernt. Hältst du das für eine gute Idee?
 
 Viele Grüße
 Andreas`,
     instructions: "Antworten Sie Andreas. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Vorschlag wie Andreas seinem Arbeitskollegen helfen kann",
-      "Wie Sie am liebsten arbeiten (alleine oder mit Kollegen)",
-      "Was Sie nach dem Urlaub gemacht haben",
+      "Ihr Rat, wie Andreas seinem Kollegen helfen kann",
+      "Ob Sie lieber allein oder mit Kollegen arbeiten",
+      "Wie Ihr letzter Urlaub war",
       "Was es bei Ihnen Neues gibt",
     ],
     requiresSubject: false,
@@ -83,16 +105,22 @@ Andreas`,
     stimulusAuthor: "Petra",
     stimulusText: `Liebe(r) ........
 
-Ich habe eine tolle Überraschung. stelle dir vor, was mir mein Onkel angeboten hat. Er rief mich am Samstag an. Er hat ein großes Ferienhaus im Schwarzwald. Das Haus kann ich für die Ferien kostenlos haben. Ich kann auch Freunde mitbringen! Wäre das nichts für uns? Wir könnten uns alle dort treffen. Du, deine Eltern und Freunde, und ich mit meiner Familie und meinen Freunden. Ich würde mich wahnsinnig freuen, wenn das klappen würde. Bitte schreibe mir so schnell du kannst, damit wir alles planen können. Urlaub im Schwarzwald - das wird traumhaft schön!
+ich platze fast vor Freude und muss dir sofort schreiben!
+
+Meine Tante hat sich gestern gemeldet. Ihr gehört im Schwarzwald ein altes Bauernhaus, das den ganzen August leer steht. Wir dürfen es umsonst benutzen, und ich darf Leute mitbringen - so viele, wie hineinpassen.
+
+Als Kind war ich einmal dort: dicke Mauern, ein Ofen in der Stube, hinter dem Haus führt ein Weg direkt in den Wald. Bis zum nächsten Dorf läuft man zwanzig Minuten, und das Telefon hat fast nirgends Empfang. Genau deshalb wäre es perfekt.
+
+Gib mir bitte bis Ende des Monats Bescheid, dann kann ich meiner Tante antworten. Es wäre großartig, wenn du dabei wärst!
 
 Herzliche Grüße
 Petra`,
-    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu den folgenden Punkten:",
+    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Warum Sie gern nach Deutschland kommen möchten",
-      "Wie Sie anreisen wollen",
-      "Was Sie gemeinsam machen könnten",
-      "Wen Sie mitbringen möchten",
+      "Ob Sie im August mitkommen möchten",
+      "Wie Sie anreisen würden",
+      "Was Sie dort gemeinsam unternehmen könnten",
+      "Wen Sie gern mitbringen würden",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-03.png",
@@ -104,19 +132,22 @@ Petra`,
     stimulusAuthor: "Sophie",
     stimulusText: `Liebe(r) ........
 
-wir haben lange nichts mehr voreinander gehört. Ich hoffe, es geht dir gut. Gibt es bei dir Neuigkeiten? Ich bin nun schon seit zwei Monaten in Würzburg, und mein neuer Job gefällt mir sehr gut. In der Firma fühle ich mich wohl, mit meinen Kollegen verstehe ich mich prima und die Arbeit macht mir großen Spaß.
+es ist viel zu lange her, dass wir voneinander gehört haben. Wie läuft es bei dir?
 
-Allerdings habe ich ein Problem: Außer meinen Kollegen kenne ich hier in der Stadt noch niemanden. In meiner Freizeit bin ich oft allein und weiß nicht, was ich machen soll. Wie könnte ich neue Leute kennenlernen? Hast du vielleicht einen Tipp für mich?
-Würzburg ist wirklich eine schöne Stadt mit vielen Sehenswürdigkeiten. Hast du Lust, mich mal an einem Wochenende zu besuchen? Ich würde mich sehr freuen.
+Seit Anfang März bin ich nun in Würzburg. Die Stelle war die richtige Entscheidung: Die Aufgaben wechseln ständig, und im Büro wird viel gelacht.
+
+Schwierig ist alles danach. Wenn ich abends die Tür hinter mir zuziehe, kenne ich in dieser Stadt keinen Menschen. Am Samstag war ich zweimal spazieren und einmal einkaufen - mehr ist nicht passiert. Wie hast du das gemacht, als du irgendwo neu warst? Über einen Verein, über Nachbarn?
+
+Und falls du magst: Ein Wochenende hier würde dir gefallen, glaube ich. Sag einfach, wann es dir passt.
 
 Viele Grüße
 Sophie`,
     instructions: "Antworten Sie Sophie. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Was es Neues bei Ihnen gibt",
-      "Was Sie selbst gerne in Ihrer Freizeit machen",
-      "Tipps für Sophie",
-      "Reaktion auf den Vorschlag",
+      "Was es bei Ihnen Neues gibt",
+      "Was Sie in Ihrer Freizeit gern machen",
+      "Ihr Tipp, wie Sophie neue Leute kennenlernt",
+      "Antwort auf Sophies Einladung",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-04.png",
@@ -128,24 +159,24 @@ Sophie`,
     stimulusAuthor: "Vera",
     stimulusText: `Liebe(r) ........
 
-Wie geht es dir und deiner Familie?
+wie läuft es bei euch zu Hause?
 
-Bei mir läuft alles prima. Endlich habe ich eine neue Arbeitsstelle. Ich habe nur ein kleines Problem: Es ist ein bisschen zu weit, um zu Fuß zu gehen.
+Seit Kurzem habe ich eine neue Stelle, und die Arbeit selbst gefällt mir gut. Nur der Weg dorthin bringt mich zur Verzweiflung. Mit dem Rad wäre die Strecke die schönste, aber die Landstraße hat keinen Seitenstreifen, und frühmorgens fahren dort die Lastwagen.
 
-Und der Bus fährt nur alle 30 Minuten. Früher bin ich meist mit dem Fahrrad gefahren, aber hier gibt es keine Fahrradwege. Und da ist ja auch noch mein Daniel, den ich morgens in den Kindergarten bringen muss.
+Also nehme ich den Zug. Einmal muss ich umsteigen, und hat der erste zwei Minuten Verspätung, warte ich zwanzig auf den zweiten. Vorher setze ich noch meine Tochter bei der Tagesmutter ab - du kannst dir denken, wann bei mir der Wecker klingelt.
 
-Der liegt zum Glück gleich neben meiner neuen Firma. – Wie kommst du denn zur Arbeit oder zum Deutschkurs?
+Und du, wie legst du deinen Weg zur Arbeit zurück?
 
-Wollen wir uns nicht mal wieder treffen und alle zusammen was unternehmen? Ich würde mich freuen.
+Sollen wir bald einmal etwas zusammen unternehmen?
 
 Liebe Grüße
 Vera`,
-    instructions: "Antworten Sie Vera. Schreiben Sie etwas zu allen vier Punkte:",
+    instructions: "Antworten Sie Vera. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
       "Was es bei Ihnen Neues gibt",
-      "Wie Sie zur Arbeit kommen",
-      "Was Sie über Veras neue Stelle wissen wollen",
-      "Vorschlag für gemeinsame Unternehmung",
+      "Wie Sie zur Arbeit oder zum Kurs kommen",
+      "Was Sie über Veras neue Stelle wissen möchten",
+      "Ihr Vorschlag für eine gemeinsame Unternehmung",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-05.png",
@@ -157,20 +188,22 @@ Vera`,
     stimulusAuthor: "Annika",
     stimulusText: `Liebe(r) ........
 
-Wie geht's dir? Hattest du ein schönes Wochenende? Hier hat es die ganze Zeit geregnet, deshalb bin ich zuhause geblieben.
+hattest du auch so ein verregnetes Wochenende? Ich bin kaum vor die Tür gekommen und habe stattdessen zwei Schubladen ausgeräumt, die seit dem Umzug zu waren.
 
-Du hattest vorgeschlagen, dass wir im Sommer zusammen verreisen könnten. Die Idee finde ich super! An welches Reiseziel denkst du? Ich bin gerne am Meer, mag aber auch Städterreisen. Wichtig ist für mich nur, dass ich auch ein bisschen Sport machen kann. Die Reise sollte aber nicht zu viel kosten, denn ich habe vor Kurzem schon viel für eine Autoreparatur bezahlen müssen. Was meinst du: wie können wir günstig Urlaub machen? Es muss ja kein Luxushotel sein.
+Zu unserer Reise: Ich bin dabei! Weißt du schon, wohin? Mir gefällt beides, Küste und Stadt. Nur herumsitzen möchte ich nicht - ein bisschen wandern oder schwimmen sollte möglich sein.
 
-Schreib mir bald, dann können wir anfangen zu planen.
+Eine Bitte habe ich allerdings. Wir sollten aufs Geld achten. Im Februar ist meine Waschmaschine kaputtgegangen, und die neue war teurer als gedacht. Fällt dir etwas ein, wie man so etwas günstig hinbekommt? Auf ein schickes Hotel lege ich wirklich keinen Wert.
+
+Melde dich, dann fangen wir an zu planen.
 
 Viele Grüße
 Annika`,
     instructions: "Antworten Sie Annika. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Was Sie am Wochenende unternommen haben",
-      "Wohin Sie gerne reisen würden",
-      "Was Sie im Urlaub gerne machen",
-      "Wie man beim Reisen Geld sparen kann",
+      "Wie Sie Ihr Wochenende verbracht haben",
+      "Wohin Sie gern reisen würden",
+      "Was Sie im Urlaub gern machen",
+      "Ihre Ideen, wie die Reise günstig bleibt",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-06.png",
@@ -178,23 +211,28 @@ Annika`,
   {
     ...base,
     title: "Abschlussfest für den Kurs",
-    taskIntro: "Eine Bekannte hat Ihnen den folgende E-Mail geschrieben:",
+    taskIntro: "Eine Bekannte hat Ihnen die folgende E-Mail geschrieben:",
     stimulusAuthor: "Iris",
     stimulusText: `Liebe(r) ........
 
-endlich habe ich die Deutscheprüfung hinter mir. Ich glaube, es ist gut gelaufen. Jetzt soll für unseren Kurs eine Party organisieren. Du hast doch kürzlich erzählt, dass Du für Euren Kurs auch ein Abschlussfest organsiert hast. Sicher kannst du mir ein paar Tipps geben. Ich habe mir gedacht, wir könnten vielleicht in einem Restaurant feiern. Da kann jeder essen und trinken, was er will. Was meinst Du? Essen zu kochen ist doch ziemlich viel Arbeit. und natürlich brauchen wir Musik. Welche Musik ist am besten geeignet? Was schlägst Du vor?
+die Prüfung ist überstanden! Wie es gelaufen ist, weiß ich noch nicht genau, aber schlecht war es bestimmt nicht.
 
-Melde Dich bald.
-Ich freue mich schon auf deine Antwort.
+Nun liegt die Feier für unseren Kurs bei mir, und ich merke gerade, dass ich keine Ahnung habe, wo man anfängt. Du hast im vorigen Jahr für deine Gruppe etwas Ähnliches auf die Beine gestellt - erzähl mir, wie du vorgegangen bist.
+
+Mein erster Gedanke war ein Lokal: Dann bestellt sich jeder, was er mag, und hinterher räumt niemand auf. Andererseits wäre gemeinsames Kochen persönlicher. Wozu würdest du raten?
+
+Bleibt die Musik. Wir sind vierzehn Leute aus neun Ländern, da hat jeder einen anderen Geschmack.
+
+Schreib mir bald.
 
 Liebe Grüße
 Iris`,
     instructions: "Antworten Sie Ihrer Bekannten. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Reaktion auf die Prüfung",
-      "Wo feiern? Restaurant - Ihre Meinung",
-      "Welche Musik",
-      "Urlaubpläne",
+      "Reaktion auf Iris' Prüfung",
+      "Ihre Meinung: Lokal oder gemeinsam kochen",
+      "Welche Musik Sie vorschlagen",
+      "Ihre eigenen Pläne für die Ferien",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-07.png",
@@ -202,25 +240,28 @@ Iris`,
   {
     ...base,
     title: "Evas Traumberuf als Journalistin",
-    taskIntro: "Eine Bekannte aus der Schweiz hat eine neue Stelle. Sie hat Ihnen den folgenden Brief geschrieben:",
+    taskIntro:
+      "Eine Bekannte aus der Schweiz hat eine neue Stelle. Sie hat Ihnen den folgenden Brief geschrieben:",
     stimulusAuthor: "Eva",
     stimulusText: `Liebe(r) ........
 
-wie geht es denn so mit dem Deutsch lernen? Kommst du gut voran, und was machst du im Moment so? Stell dir vor, ich habe die neue Stelle bei der Zeitschrift VIA bekommen! ich arbeite jetzt als Journalistin, und das war ja immer mein Traumberuf!
+wie steht es um dein Deutsch? Machst du Fortschritte?
 
-VIA wird vor allem von jüngeren Leuten gelesen. Deshalb schreiben wir viel über Berufe und Ausbildungen und auch über Freizeit und Sport. Für die nächsten Hefte von VIA planen wir jetzt eine neue Serie über Berufs wünsche. Was ist eigentlich dein Traumberuf? Wenn du möchtest, schicke ich dir gerne einmal ein Grätschet von VIA, damit du siehst, was ich so mache.
+Bei mir hat sich etwas Großes getan: Seit dem Frühjahr schreibe ich für die Zeitschrift VIA. Als Journalistin! Genau das wollte ich schon mit fünfzehn werden, und manchmal muss ich mich kneifen.
 
-Ich freue mich schon auf deine Antwort.
+Unsere Leserinnen und Leser sind meist zwischen achtzehn und dreißig. Entsprechend geht es um Ausbildung, Studium und Arbeit, daneben um Sport, Musik und Reisen. Im Herbst starten wir eine Reihe über Berufsträume: Wir wollen wissen, welchen Beruf die Leute ergreifen würden, wenn das Geld keine Rolle spielte.
+
+Also frage ich dich dasselbe. Welcher Beruf wäre es bei dir? Und soll ich dir eine Ausgabe schicken?
 
 Herzliche Grüße
 Eva`,
     instructions:
-      "Schreiben Sie Ihrer Bekannten nun einen Antwortbrief, der die folgenden Punkte erhält:",
+      "Schreiben Sie Ihrer Bekannten einen Antwortbrief, der die folgenden vier Punkte enthält:",
     leitpunkte: [
-      "Fortschritte beim Deutsch Lernen",
-      "Auf Evas neue Stelle reagieren",
-      "Was es Neues bei Ihnen gibt",
-      "Ihr Traumberuf",
+      "Ihre Fortschritte beim Deutschlernen",
+      "Reaktion auf Evas neue Stelle",
+      "Was es bei Ihnen Neues gibt",
+      "Ihr Traumberuf und warum",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-08.png",
@@ -232,22 +273,22 @@ Eva`,
     stimulusAuthor: "Tamara",
     stimulusText: `Liebe(r) ........
 
-wie geht es Dir? Du hast mir schon so lange nicht mehr geschrieben, dass ich mir Sorgen mache. Hoffentlich ist bei Euch alles in Ordnung. Es wird wirklich Zeit, dass wir uns wiedersehen.
+von Dir habe ich ewig nichts gelesen, und langsam frage ich mich, ob bei Euch alles seinen gewohnten Gang geht.
 
-Anfang des Jahres habe ich meinen Arbeitsplatz gewechselt. Meine neue Stelle ist sehr interessant, aber auch anstrengend.
+Beruflich hat sich hier einiges verschoben. Im Frühjahr habe ich die Firma gewechselt. Die Arbeit ist deutlich spannender als vorher, dafür sind die Tage lang, und ich sitze öfter im Zug als am Schreibtisch.
 
-Ich bin nun beruflich sehr viel unterwegs. Demnächst muss ich auch in Eure Gegend reisen. Dann könnten wir uns doch einmal am Abend treffen und gemeinsam etwas unternehmen. Wie findest Du meine Idee? Ich würde auch sehr gerne Deine Familie kennenlernen.
+Genau darum schreibe ich Dir: Im November führt mich ein Termin in Eure Richtung. An dem Abend hätte ich Zeit. Wir könnten essen gehen oder einfach bei Euch sitzen und reden. Deine Familie habe ich ja noch nie gesehen, das ist längst überfällig.
 
-Bitte antworte mir bald!
+Lass mich bitte bald wissen, ob das passt!
 
 Herzliche Grüße
 Deine Tamara`,
-    instructions: "Antworten Sie Tamara. Schreiben Sie etwas zu allen vier Punkte:",
+    instructions: "Antworten Sie Tamara. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Vorschlag zum Treffen",
-      "Jemanden mitbringen",
-      "Frage zur neuen Arbeitsstelle",
-      "Warum Sie nicht geschrieben haben",
+      "Warum Sie so lange nicht geschrieben haben",
+      "Ihr Vorschlag für den Abend im November",
+      "Was Sie über Tamaras neue Stelle wissen möchten",
+      "Wen Sie zum Treffen mitbringen möchten",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-09.png",
@@ -255,27 +296,29 @@ Deine Tamara`,
   {
     ...base,
     title: "Thomas' Ausflug mit Bus und Schiff",
-    taskIntro: "Sie haben von Ihnen Freund folgende E-Mail erhalten:",
+    taskIntro: "Sie haben von Ihrem Freund folgende E-Mail erhalten:",
     stimulusAuthor: "Thomas",
     stimulusText: `Liebe(r) ........
 
-nach unserm schönen, gemeinsamen Erlebnis letztes Jahr möchte ich auch dieses Jahr wieder einen Ausflug für uns alle organisieren. Ich hoffe sehr, dass ihr Zeit habt und mitkommen könnt - ich freue mich schon jetzt, euch alle bald wieder zu sehen! Das Dumme ist nur, dass ich mir vor drei Wochen beim Basketball das Bein gebrochen habe und noch nicht so gut zu Fuß bin. Deshalb habe ich einen gemütlichen Ausflug mit Bus und Schiff geplant - hoffentlich ist dann auch das Wetter gut für die Schiffsfahrt! Wohin es geht, möchte ich euch aber noch nicht verraten - das soll eine Überraschung werden.
+nach unserem gelungenen Tag im vergangenen Jahr möchte ich wieder etwas auf die Beine stellen. Haltet euch den Termin bitte frei!
 
-Termin: übernächster Samstag.
+Eines vorweg: Beim Fußball habe ich mir den Knöchel gebrochen. Er ist noch nicht in Ordnung, weite Strecken zu Fuß fallen für mich also vorerst aus. Deshalb wird es diesmal bequem - erst ein Stück mit dem Bus, danach eine Fahrt auf dem Wasser. Bei Sonne wird das ein herrlicher Tag.
 
-Zeit und Treffpunkt: 9:30 Uhr bei mir.
+Das Ziel behalte ich für mich. Lasst euch überraschen.
 
-Bitte schreibt mir doch, ob ihr beim Ausflug dabei sein könnt!
+Termin: Samstag in zwei Wochen
+Treffpunkt: 9:30 Uhr vor meiner Haustür
 
-Hoffentlich bis bald.
+Gebt mir bitte Bescheid, ob ihr dabei seid!
 
+Bis dahin
 Thomas`,
     instructions: "Antworten Sie Thomas. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Alternativvorschlag für Schlechtes Wetter",
-      "Einladung annehmen",
-      "Was Sie noch über den Ausflug wissen wollen",
-      "Auf Sportunfall reagieren",
+      "Reaktion auf Thomas' Verletzung",
+      "Ob Sie beim Ausflug dabei sind",
+      "Was Sie noch über den Ausflug wissen möchten",
+      "Ihr Vorschlag für schlechtes Wetter",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-10.png",
@@ -287,18 +330,20 @@ Thomas`,
     stimulusAuthor: "Jan",
     stimulusText: `Liebe(r) ........
 
-Ich sende Dir ganz viele Grüße aus Rom! Du weißt ja, wie sehr mir diese Stadt gefällt. Ich bin hier von morgens bis abends nur unterwegs. Diese Museen, Parks Plätze und natürlich das Essen – wunderbar! Gestern Abend war ich übrigens in einem Rockkonzert. Ich fand die Musik ganz toll und die Stimmung war super.
+ich schreibe dir vom Balkon meiner Pension in Rom. Dass mich diese Stadt jedes Mal umhaut, ist dir bekannt. Seit Montag laufe ich mir die Füße wund: Kirchen, Märkte, versteckte Innenhöfe - und mittags jedes Mal etwas anderes auf dem Teller. Am Mittwoch bin ich zufällig in ein Konzert im Park geraten, ohne die Gruppe vorher zu kennen. Es war der schönste Abend der Woche.
 
-Doch Leider ist mein Urlaub schon fast vorbei und in drei Tagen muss ich wieder zurück nach Deutschland. Welche Stadt ist eigentlich Deine Lieblingsstadt? Hast du schon Pläne für Deinen nächsten Urlaub? Vielleicht können wir uns ja mal wieder treffen.
+In drei Tagen ist Schluss, dann sitze ich wieder am Schreibtisch.
+
+Sag mal, in welcher Stadt fühlst du dich am wohlsten? Und weißt du schon, wohin es dich als Nächstes zieht? Wir sollten uns wirklich bald wiedersehen.
 
 Herzliche Grüße
 Jan`,
-    instructions: "Antworten Sie Jan. Schreiben Sie etwas zu allen vier Punkte:",
+    instructions: "Antworten Sie Jan. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Ihre Lieblingsstadt",
-      "Welche Musik Sie mögen",
+      "Ihre Lieblingsstadt und warum",
+      "Welche Musik Sie gern hören",
       "Ihre Pläne für den nächsten Urlaub",
-      "Treffen mit Jan?",
+      "Ihr Vorschlag für ein Treffen",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-11.png",
@@ -310,18 +355,22 @@ Jan`,
     stimulusAuthor: "Jennifer",
     stimulusText: `Liebe(r) ........
 
-Entschuldige, dass ich mich erst jetzt wieder melde. Ich weiß, wir hatten ausgemacht, uns öfter mal zu schreiben. Aber es war so viel los in letzter Zeit. Ich habe eine Neuigkeit für dich: Meine kleine Schwester Janine heiratet im Oktober, und ich habe ihr versprochen, schon mal allen Freunden zu schreiben und Bescheid zu sagen. Die offizielle Einladung bekommst du natürlich noch von ihr direkt. Eddi, ihr zukünftiger Mann, ist echt nett, und wir mögen ihn alle sehr. Er ist koch und arbeitet hier in einem Hotel.
+verzeih, dass ich mich erst heute melde - wir wollten uns doch regelmäßig schreiben, und dann kam hier ein Monat wie der andere dazwischen.
 
-Wir planen jetzt alles. Gib mir deshalb möglichst bald Bescheid, ob du kommst und mit wem.
+Es gibt aber einen schönen Anlass: Janine, meine jüngere Schwester, heiratet. Der Termin steht, es wird der zwölfte Oktober. Sie hat mich gebeten, im Freundeskreis schon einmal vorzuwarnen; die gedruckte Einladung bekommst du natürlich von ihr selbst.
+
+Ihren Verlobten kennst du noch nicht. Er heißt Eddi, steht in der Küche eines Restaurants am Hafen und ist der ganzen Familie längst ans Herz gewachsen.
+
+Damit wir planen können: Kommst du? Und bringst du jemanden mit?
 
 Herzliche Grüße
 Jennifer`,
-    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu den folgenden vier Punkten:",
+    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Reaktion auf Neuigkeit",
-      "Übernachtungsmöglichkeit",
-      "Sie möchten zur Hochzeit kommen",
-      "Hochzeitsgeschenk",
+      "Reaktion auf die Neuigkeit",
+      "Ob Sie zur Hochzeit kommen",
+      "Ihre Frage zur Übernachtung",
+      "Ihre Idee für ein Hochzeitsgeschenk",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-12.png",
@@ -333,23 +382,22 @@ Jennifer`,
     stimulusAuthor: "Sonja",
     stimulusText: `Liebe(r) ........
 
-die Sommerferien kommen rasch näher und ich freue mich sehr, dass du mich besuchen kommst. Ich habe tolle Idee:
+bald sind Ferien, und dass du herkommst, ist für mich das Beste daran. Einen Vorschlag hätte ich auch schon:
 
-Ich möchte dich gerne zu einem Musikfestvial einladen, und zwar nach Rüdesheim (ca.50 km von Mainz). Dort spielen in diesem Sommer die besten internationalen Musikgruppen.
+Nicht weit von hier, in Rüdesheim, findet im Juli ein Festival statt. Die Bühne steht direkt über dem Fluss, und in diesem Jahr treten Bands aus acht Ländern auf.
 
-Ich finde Open-Air-Konzerte einfach toll: die friedliche Stimmung unter den Besuchern, die gute Music und einfach viele schöne Momente, die man nie mehr vergisst. Vor allem, wenn das Wetter gut ist, kann man das so richtig genießen.
+Konzerte im Freien sind für mich das Schönste am Sommer: barfuß im Gras, Musik bis in die Nacht, und morgens trinken alle zusammen Kaffee.
 
-Wir könnten mit dem Zug nach Rüdesheim fahren oder auch mein Auto nehmen. Was wäre dir lieber? Übernachten würde ich gern auf dem Festplatz. Was meinst du? Und willst du vielleicht noch jemanden mitbringen? Vielleicht hast du noch einen Wunsch, was du sonst noch hier machen möchtest? Schreibe mir bitte möglichst bald.
-Ich freue mich schon auf deine Antwort.
+Zwei Dinge müssen wir klären. Nehmen wir die Bahn, oder soll ich uns hinfahren? Und schlafen wir im Zelt neben dem Gelände oder lieber in einem Zimmer in der Stadt? Sag mir bitte auch, ob du jemanden mitbringst.
 
 Herzliche Grüße
 Sonja`,
-    instructions: "Antworten Sie Sonja. Schreiben Sie in Ihrem Brief etwas zu allen vier Punkten:",
+    instructions: "Antworten Sie Sonja. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Was sonst noch machen?",
-      "Wie zum Festival reisen?",
-      "Jemanden mitbringen?",
-      "Übernachten: Reaktion auf Sonjas Vorschlag",
+      "Wie Sie zum Festival reisen möchten",
+      "Ob Sie im Zelt oder in der Stadt schlafen möchten",
+      "Ob Sie jemanden mitbringen",
+      "Was Sie sonst noch zusammen unternehmen möchten",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-13.png",
@@ -357,25 +405,26 @@ Sonja`,
   {
     ...base,
     title: "Besuch einer Schülerin aus Ihrem Land",
-    taskIntro: "Sie haben von einer Bekannten folgenden E-Mail erhalten:",
+    taskIntro: "Sie haben von einer Bekannten folgende E-Mail erhalten:",
     stimulusAuthor: "Caroline",
     stimulusText: `Liebe(r) ........
 
-Du hast schon so lange nicht mehr geschrieben. Wie geht es dir? Heute habe ich eine Bitte. Vielleicht kannst du uns helfen?
+lange nichts von dir gelesen - ich hoffe, dir geht es gut. Heute komme ich mit einer Bitte.
 
-Eine 16-jährige Schülerin aus deinem Land wird uns besuchen und zwei Wochen bei uns in Goldbach bleiben. Natürlich möchten wir, dass sie sich wohl fühlt. Dein Land kennen wir nur von deinen Erzählungen, denn wir waren selbst noch nicht da. Bitte gib uns ein paar Informationen Z.B über typische Gewohnheiten oder typisches Essen. Was können wir tun und wie können wir uns vorbereiten?
+Im Mai nehmen wir für vierzehn Tage eine Schülerin bei uns auf. Sie ist sechzehn, kommt aus deinem Land und bekommt das Zimmer meines Sohnes, der gerade im Ausland studiert. Wir möchten natürlich, dass sie sich bei uns wohlfühlt.
 
-Wir freuen uns schon auf deine Antwort.
+Nur wissen wir über ihre Heimat so gut wie nichts. Was isst man bei euch morgens? Gibt es beim Essen oder beim Begrüßen Regeln, die wir kennen sollten? Und wovon lassen wir besser die Finger, damit es ihr nicht unangenehm wird?
 
-Schon einmal viele Dank und liebe Grüße
+Für jeden Hinweis bin ich dankbar.
 
+Liebe Grüße
 Caroline`,
-    instructions: "Antworten Sie Caroline. Schreiben Sie etwas zu den folgenden vier Punkten:",
+    instructions: "Antworten Sie Caroline. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
       "Reaktion auf den Besuch der Schülerin",
-      "Vorschlag zu Essen und Trinken",
+      "Was man bei Ihnen typischerweise isst",
+      "Gewohnheiten, die Caroline kennen sollte",
       "Warum Sie so lange nicht geschrieben haben",
-      "Unternehmungen/Programm mit der Schülerin",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-14.png",
@@ -387,19 +436,21 @@ Caroline`,
     stimulusAuthor: "Nadja",
     stimulusText: `Liebe(r) ........
 
-ich hoffe, dir geht's gut. stell dir vor, bei mir gibt es Neuigkeiten Du weißt doch, dass wir schon lange von einem Garten geträumt haben. Jetzt haben wir endlich einen am Stadtrand gefunden. Da er sehr groß ist. Wollte ich dich fragen, ob du nicht Lust hast den Garten mit uns zu teilen.
+bei uns hat sich etwas getan, und ich glaube, für dich könnte es auch interessant sein.
 
-Die Miete ist gar nicht so hoch. Du könntest dort Salat und Gemüse anpflanzen, natürlich auch Blumen ganz wie du willst. Es gibt auch Obstbäume und eine große Wiese, auf der man sich einfach hinlegen, und wir könnten im Garten auch grillen. Was denkst du? Wäre das nicht toll.
-Antworte mir bald.
+Seit Ostern gehört uns ein Stück Land in der Kleingartenanlage hinter dem Sportplatz. Es ist größer, als wir dachten - allein schaffen wir die Arbeit nicht, und die Hälfte liegt bisher brach.
+
+Deshalb meine Frage: Möchtest du mitmachen? Die Pacht ist gering, geteilt merkt man sie kaum. Du hättest deine eigene Ecke und könntest anbauen, was dir gefällt. Auf dem Gelände stehen ein paar Beerensträucher, es gibt einen Wasseranschluss und eine Hütte, in der Werkzeug und zwei alte Liegestühle untergebracht sind.
+
+Überleg es dir und ruf mich an.
 
 Alles Liebe
-
 Deine Nadja`,
-    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu den folgenden vier Punkten:",
+    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Reaktion auf den Vorschlag",
-      "Fragen zum Garten",
-      "Weg zum Garten",
+      "Reaktion auf Nadjas Vorschlag",
+      "Ihre Fragen zum Garten",
+      "Wie Sie zum Garten kommen würden",
       "Was es bei Ihnen Neues gibt",
     ],
     requiresSubject: false,
@@ -409,24 +460,24 @@ Deine Nadja`,
     ...base,
     title: "Nicoles Bruder und der Fernseher",
     taskIntro:
-      "Eine Freundin beschreibt in einem Brief, welche Probleme sie mit ihrem Bruder hat und bittet Sie um Rat:",
+      "Eine Freundin beschreibt in einem Brief, welche Probleme sie mit ihrem Bruder hat, und bittet Sie um Rat:",
     stimulusAuthor: "Nicole",
     stimulusText: `Liebe(r) ........
 
-entschuldige, dass ich dir so lange nicht mehr geschrieben habe. Aber weißt du mein älterer Bruder, der schon lange im Ausland lebt, ist jetzt für zwei Monate bei uns. Wir unternehmen einiges zusammen, Z.B. gehen wir nachmittags ins Schwimmbad oder abends ins Kino.
+es tut mir leid, dass du so lange nichts von mir gehört hast. Mein Bruder wohnt zurzeit bei uns. Er lebt seit Jahren in Kanada und bleibt diesmal bis Ende Juni. Wir haben uns viel vorgenommen: Radtouren, Kino, einmal in der Woche kochen wir zusammen.
 
-Wir verstehen uns eigentlich ganz gut, aber dennoch habe ich ein Problem mit ihm: Wenn es im Fernsehen Sportsendungen gibt, dann bekomme ich ihn nicht mehr weg vom Fernseher! Er sitzt dann stundenlang nur da und sieht fern, ganz egal wie schön das Wetter draußen ist! Was soll ich bloß tun? Überhaupt nichts sagen oder soll ich mit ihm deswegen streiten? Er fährt bald wieder weg und ich möchte doch mit ihm zusammen sein. Was würdest du machen?
+Eine Sache raubt mir allerdings den letzten Nerv. Läuft im Fernsehen irgendein Wettkampf, ist er für den Rest des Tages verloren. Vorhin hatten wir dreißig Grad und blauen Himmel, und er saß bei zugezogenen Vorhängen davor.
 
-Hast du vielleicht ein paar Tipps oder Ratschläge für mich?
+Soll ich es ansprechen? Streiten möchte ich nicht, denn wer weiß, wann wir uns wiedersehen. Wie würdest du damit umgehen?
 
 Herzliche Grüße
 Nicole`,
     instructions:
-      "Schreiben Sie Ihrer Bekannten einen Antwortbrief, der die folgenden Punkte enthält:",
+      "Schreiben Sie Ihrer Bekannten einen Antwortbrief, der die folgenden vier Punkte enthält:",
     leitpunkte: [
-      "Eigene Erfahrungen mit Geschwistern, Freunden, ...",
-      "Tipps für Nicole",
-      "Was Sie über den Bruder denken",
+      "Ihr Rat für Nicole",
+      "Eigene Erfahrungen mit Geschwistern oder Freunden",
+      "Was Sie über das Verhalten des Bruders denken",
       "Was Sie selbst gern gemeinsam mit anderen machen",
     ],
     requiresSubject: false,
@@ -437,21 +488,24 @@ Nicole`,
     title: "Maras Autoreise mit ihrem neuen Freund",
     taskIntro: "Eine Freundin hat Ihnen den folgenden Brief geschrieben:",
     stimulusAuthor: "Mara",
-    stimulusText: `... , den ...
+    stimulusText: `Liebe(r) ........
 
-Liebe(r) …
+meldest Du Dich eigentlich noch? Seit Monaten kommt nichts von Dir, und wann wir uns zuletzt gesehen haben, weiß ich gar nicht mehr.
 
-wie geht es Dir? Warum hast Du in den letzten Wochen nicht mehr geschrieben? Leider haben wir uns ja auch schon sehr lange nicht mehr gesehen. Doch das kann sich bald ändern. Mein neuer Freund und ich haben in zwei Wochen Urlaub und möchten eine Reise mit dem Auto machen.
-Dabei möchten wir Dich auch gerne treffen. Schließlich möchte ich Dir ja auch meinen Freund vorstellen. Vielleicht hast Du eine Idee, wo wir uns treffen könnten. Kannst Du uns auch ein schönes Hotel bei Euch in der Nähe empfehlen? Antworte mir bald!
+Vielleicht ändert sich das jetzt. Ende des Monats nehmen wir uns zwei Wochen frei, packen das Auto und fahren einfach los, ohne feste Route. Unterwegs würden wir gern bei Dir haltmachen. Es wird höchste Zeit, dass Du Simon kennenlernst - wir sind seit dem Winter zusammen.
+
+Zwei Fragen also: Wo könnten wir uns treffen? Und kennst Du bei Euch eine bezahlbare Unterkunft für zwei Nächte? Ein einfacher Gasthof reicht uns völlig.
+
+Antworte mir diesmal bitte schnell!
 
 Herzliche Grüße
 Mara`,
-    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu den folgenden Punkten:",
+    instructions: "Antworten Sie auf den Brief. Schreiben Sie etwas zu allen vier Punkten:",
     leitpunkte: [
-      "Hotel / Übernachtungsmöglichkeit",
-      "Vorschlag zum Treffen",
-      "Reaktion auf Maras neuen Freund",
-      "Warum Sie lange nicht geschrieben haben",
+      "Warum Sie so lange nicht geschrieben haben",
+      "Ihr Vorschlag, wo Sie sich treffen könnten",
+      "Eine Empfehlung für eine Unterkunft",
+      "Reaktion darauf, dass Mara ihren Freund mitbringt",
     ],
     requiresSubject: false,
     sourceFile: "telc-uebungstest-17.png",
