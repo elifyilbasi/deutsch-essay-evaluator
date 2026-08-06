@@ -70,3 +70,9 @@ exam-materials/your-draft-*.txt
 skills-lock.json
 .claude/skills/
 .windsurf/
+
+# Signs a session cookie with AUTH_SECRET so the auth-gated pages can be opened during
+# development without going through Google. It refuses to run outside localhost, but it
+# will mint a session for any email it is handed, which is not a thing to carry in the
+# history. Kept local; recreate it if you need it.
+scripts/dev-session.ts
