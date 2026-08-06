@@ -14,6 +14,7 @@ import { countWords, formatWordRange, wordsOutOfRange } from "@/lib/wordCount";
 import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
 import { safeJson, errorMessage } from "@/lib/safeJson";
+import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
 import {
   INSTITUTES,
   LEVELS,
@@ -448,7 +449,9 @@ function WriteWizard() {
           <CardContent className="space-y-4">
             {selectedPrompt.stimulusText && (
               <div className="rounded-lg border bg-muted/40 p-4">
-                <p className="whitespace-pre-wrap text-sm">{selectedPrompt.stimulusText}</p>
+                <p className="whitespace-pre-wrap text-sm">
+                  {reflowSoftWraps(selectedPrompt.stimulusText)}
+                </p>
               </div>
             )}
 

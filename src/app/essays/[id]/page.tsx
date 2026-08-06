@@ -12,6 +12,7 @@ import { TaskBrief } from "@/components/task-brief";
 import { EvaluateEssayButton } from "@/components/evaluate-essay-button";
 import { formatDuration } from "@/lib/formatDuration";
 import { getRubric } from "@/lib/rubrics";
+import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
 import type { CriterionScore, Correction, LeitpunktCoverage } from "@/lib/gemini";
 
 export default async function EssayDetailPage({
@@ -91,11 +92,12 @@ export default async function EssayDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Capped measure: the shell is wide so headers and charts have room, but a
-                line of prose past ~75 characters is measurably harder to read, and this
-                is a letter meant to be read. Same cap on the essay and the feedback. */}
-            <p className="max-w-[70ch] whitespace-pre-wrap text-sm text-muted-foreground">
-              {essay.prompt.stimulusText}
+            {/* Reflowed, not printed verbatim: the seed files wrap these at ~78
+                characters for their own readability, and honouring that froze the
+                advert at the width of the source file inside a full-width card. The
+                breaks that mean something — bullets, addresses — survive. */}
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {reflowSoftWraps(essay.prompt.stimulusText)}
             </p>
           </CardContent>
         </Card>

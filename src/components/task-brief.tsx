@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { formatWordRange, wordsOutOfRange as isOutOfRange } from "@/lib/wordCount";
+import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
 
 /**
  * What the candidate was actually asked to do: the instruction line, the numbered
@@ -58,7 +59,12 @@ export function TaskBrief({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm">{instructions}</p>
+        {/* `whitespace-pre-wrap`, because the telc Aufgabe is not one paragraph: it
+            offers a choice between a) and b), each on its own line. A plain <p>
+            collapsed those newlines and ran the two options together into a single
+            sentence, which is the choice itself going missing. The reflow first drops
+            the breaks that are only the seed file's margin. */}
+        <p className="whitespace-pre-wrap text-sm">{reflowSoftWraps(instructions)}</p>
         <ul className="mt-3 space-y-1.5">
           {leitpunkte.map((punkt, i) => (
             <li key={i} className="flex gap-2 text-sm">
