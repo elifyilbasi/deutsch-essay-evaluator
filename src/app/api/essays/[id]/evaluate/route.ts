@@ -23,6 +23,9 @@ import {
  * verdict, because re-running one is a different feature with a different cost question:
  * this is only the missing half of a submission that was already paid for.
  */
+/** Same Gemini call as a submission, so the same ceiling. See src/app/api/essays/route.ts. */
+export const maxDuration = 60;
+
 export async function POST(
   _request: Request,
   context: { params: Promise<{ id: string }> },

@@ -39,9 +39,37 @@ in `prisma/migrations`, then commit that folder and use `prisma migrate deploy` 
 ## Deploying to Vercel
 
 1. Provision a Postgres database — Neon integrates natively with Vercel and has a free tier
-   (Vercel dashboard → Storage → create a Postgres database).
-2. Set these environment variables in the Vercel project: `DATABASE_URL`, `AUTH_SECRET`
-   (`openssl rand -base64 32`), `GEMINI_API_KEY`, `GEMINI_MODEL`, `DAILY_EVAL_LIMIT`.
+   (Vercel dashboard → Storage → create a Postgres database). Use the **pooled** connection
+   string (Neon's `-pooler` host) for `DATABASE_URL`. Every function instance opens its own
+   pool, so what the database sees is instances × the pool size in `src/lib/prisma.ts`; the
+   shared pooler is what keeps that from exhausting the connection limit under any real load.
+
+2. Set these environment variables in the Vercel project.
+
+   Required — the app will not start, or not let anyone in, without all five:
+
+   | Variable | Notes |
+   | --- | --- |
+   | `DATABASE_URL` | The pooled string from step 1 |
+   | `AUTH_SECRET` | `openssl rand -base64 32` — generate a fresh one, don't reuse the local value |
+   | `AUTH_GOOGLE_ID` | Sign-in is Google-only, so this is not optional |
+   | `AUTH_GOOGLE_SECRET` | ditto |
+   | `GEMINI_API_KEY` | The shared key everything is rationed against |
+
+   Rationing — every one of these means *no limit* when unset, so production is uncapped
+   until they are set. `GLOBAL_DAILY_EVAL_LIMIT` is the one that actually protects the
+   shared key: without it a single user can spend the whole day's free-tier allowance:
+
+   | Variable | Unset means | Suggested |
+   | --- | --- | --- |
+   | `GLOBAL_DAILY_EVAL_LIMIT` | no ceiling across all users | `10` (see `.env.example`) |
+   | `GEMINI_RPM_LIMIT` | no per-minute gate | match your model's RPM quota |
+   | `NEW_ACCOUNT_DAILY_LIMIT` | new accounts unrestricted | a small shared pool |
+   | `FIRST_DAY_EVAL_LIMIT` | new accounts get the ordinary quota | below `DAILY_EVAL_LIMIT` |
+
+   Optional: `GEMINI_MODEL` (defaults to `gemini-flash-latest`) and `DAILY_EVAL_LIMIT`
+   (defaults to `5`). See `.env.example` for the reasoning behind each.
+
 3. Run `npx prisma migrate deploy` against the production `DATABASE_URL` (locally, or as a
    Vercel build step) before/at first deploy, then `npx prisma db seed` once to load the
    prompt bank.

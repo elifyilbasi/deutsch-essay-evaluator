@@ -16,6 +16,19 @@ import {
   upstreamFailureMessage,
 } from "@/lib/gemini";
 
+/**
+ * Seconds this route may run for. The platform default is ten, and a submission does not
+ * fit in it: one Gemini call scoring a 150-word B2 letter against a four-criterion grid,
+ * plus the overload retry budget in src/lib/gemini.ts, which alone sleeps 1s then 3s
+ * before the third attempt. Cut off at ten seconds the learner loses the text they just
+ * wrote *and* the reservation it cost, since a reservation is deliberately not refunded
+ * on failure.
+ *
+ * Sixty rather than the maximum: it is the ceiling on Vercel's Hobby plan, so this
+ * number does not quietly stop being honoured if the project moves between plans.
+ */
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) {
