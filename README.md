@@ -3,16 +3,18 @@
 Web app for German learners to write TELC/Goethe exam-style essays and get AI feedback
 (grammar corrections, per-criterion scoring, and a summary) via Google Gemini.
 
-**MVP scope**: TELC only, levels A1–B1. TELC B2 and the Goethe-Institut are stubbed in the UI
-("Coming soon") and supported by the data model, but not yet seeded/enabled — see
-[src/lib/rubrics](src/lib/rubrics) for how to add a level or institute.
+**Scope**: TELC only, all four levels — A1, A2, B1 and B2 are seeded and selectable, 79 tasks
+between them. The Goethe-Institut is stubbed in the UI ("Coming soon") and supported by the
+data model, but has no rubric and no seeded tasks — see [src/lib/rubrics](src/lib/rubrics) for
+how to add an institute.
 
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind + shadcn/ui
 - Prisma ORM + Postgres, using the Prisma 7 `prisma-client` generator (driver-adapter based —
   see `src/lib/prisma.ts`)
-- Auth.js (NextAuth v5) with the Prisma adapter, email+password (Credentials provider)
+- Auth.js (NextAuth v5) with the Prisma adapter — Google sign-in only, JWT sessions. There is
+  no sign-up step and no password anywhere: the first sign-in creates the account
 - `@google/genai` for Gemini calls, with a per-user daily evaluation quota to protect the
   shared free-tier API key (see `src/lib/rateLimit.ts`)
 
@@ -21,7 +23,7 @@ Web app for German learners to write TELC/Goethe exam-style essays and get AI fe
 1. Copy `.env.example` to `.env` and fill in the values (see comments in that file).
 2. Start a local Postgres database: `npx prisma dev` (prints a `DATABASE_URL`; put the printed
    TCP url in `.env` — see note below on `migrate dev` vs `db push`).
-3. Push the schema and seed the TELC A1/A2/B1 prompt bank:
+3. Push the schema and seed the TELC A1–B2 prompt bank:
    ```bash
    npx prisma db push
    npx prisma db seed
