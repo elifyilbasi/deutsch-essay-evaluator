@@ -19,10 +19,6 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  /// Vestigial: sign-in is Google-only, and nothing reads or writes this any more. Kept
-  /// for one release as the way back if OAuth has to be rolled back — dropping a column
-  /// discards the hashes irreversibly, and there is no cost to leaving it null.
-  passwordHash  String?
 
   accounts   Account[]
   sessions   Session[]
