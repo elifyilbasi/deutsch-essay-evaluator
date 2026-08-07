@@ -3,7 +3,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { releaseEvaluation, reserveEvaluation } from "@/lib/rateLimit";
 import { getRubric } from "@/lib/rubrics";
-import { evaluateEssay, isOverloadedError, isQuotaError } from "@/lib/gemini";
+import {
+  evaluateEssay,
+  isOverloadedError,
+  isQuotaError,
+  upstreamFailureMessage,
+} from "@/lib/gemini";
 
 /**
  * Scores an essay that was saved but never evaluated.
@@ -93,14 +98,16 @@ export async function POST(
     // Same refund rule as submission: a call the model never took costs nothing, so it
     // must not cost the learner a slot either — which matters more here, since this path
     // exists precisely because that already happened to them once.
+    //
+    // The two failures shared one sentence, "please try again in a minute", which is true
+    // of an overloaded model and false of the per-day quota. This is the screen someone
+    // reaches *because* an evaluation already failed, so it is the worst place to send
+    // them round the loop again — upstreamFailureMessage answers from the quota Google
+    // named instead of assuming.
     if (isQuotaError(error) || isOverloadedError(error)) {
       await releaseEvaluation(session.user.id);
       return NextResponse.json(
-        {
-          error:
-            "The evaluation service is still busy. This didn't use up one of your evaluations — please try again in a minute.",
-          id: essay.id,
-        },
+        { error: upstreamFailureMessage(error), id: essay.id },
         { status: isQuotaError(error) ? 429 : 503 },
       );
     }

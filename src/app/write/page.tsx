@@ -15,6 +15,8 @@ import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
 import { safeJson, errorMessage } from "@/lib/safeJson";
 import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
+import { NOT_COPYABLE } from "@/lib/examMaterial";
+import { cn } from "@/lib/utils";
 import {
   INSTITUTES,
   LEVELS,
@@ -42,6 +44,12 @@ type PromptSummary = {
   minWords: number;
   maxWords: number | null;
   timeLimitMinutes: number | null;
+  /**
+   * How many Leitpunkte the level marks, where that is fewer than the task prints.
+   * Null when every printed point is required. Attached by the prompts API because
+   * the rubrics are server-only — same reason as `timeLimitMinutes`.
+   */
+  requiredPoints: number | null;
   practice: { attemptCount: number; bestScore: number; maxScore: number } | null;
 };
 
@@ -417,9 +425,15 @@ function WriteWizard() {
                       )}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{p.taskIntro}</p>
+                    {/* Built as one string rather than interleaved JSX: a text run that
+                        wraps to a new line straight after an expression loses its leading
+                        space, which is how this rendered "mindestens 150Wörter". */}
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {p.leitpunkte.length} Punkte &middot; {formatWordRange(p.minWords, p.maxWords)} Wörter
-                      &middot; {p.register === "SIE" ? "formell (Sie)" : "informell (du)"}
+                      {[
+                        `${p.leitpunkte.length} Punkte`,
+                        `${formatWordRange(p.minWords, p.maxWords)} Wörter`,
+                        p.register === "SIE" ? "formell (Sie)" : "informell (du)",
+                      ].join(" · ")}
                     </p>
                   </button>
                 ))}
@@ -448,7 +462,7 @@ function WriteWizard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {selectedPrompt.stimulusText && (
-              <div className="rounded-lg border bg-muted/40 p-4">
+              <div className={cn("rounded-lg border bg-muted/40 p-4", NOT_COPYABLE)}>
                 <p className="whitespace-pre-wrap text-sm">
                   {reflowSoftWraps(selectedPrompt.stimulusText)}
                 </p>
@@ -474,8 +488,15 @@ function WriteWizard() {
           <CardHeader>
             <StepTitle step={4} english="Write your letter" german="Ihren Brief schreiben" />
             <CardDescription>
-              Address all {selectedPrompt.leitpunkte.length} points, and don&apos;t forget a
-              salutation and closing.
+              {/* Not "all N points": telc B2 prints four and marks three, one of which may
+                  be an aspect of your own — the Aufgabe rendered directly above says so in
+                  its entweder/oder line. Telling the candidate to cover all four here
+                  contradicted the task they were reading and made a correct letter look
+                  short. Levels that do mark every printed point still say "all". */}
+              {selectedPrompt.requiredPoints !== null &&
+              selectedPrompt.requiredPoints < selectedPrompt.leitpunkte.length
+                ? `Address at least ${selectedPrompt.requiredPoints} of the ${selectedPrompt.leitpunkte.length} points — see the entweder/oder line above, which lets you swap one for an aspect of your own. Don't forget a salutation and closing.`
+                : `Address all ${selectedPrompt.leitpunkte.length} points, and don't forget a salutation and closing.`}
               {quota && (
                 <span className="ml-2">
                   {quota.remaining} of {quota.limit} evaluations left today.

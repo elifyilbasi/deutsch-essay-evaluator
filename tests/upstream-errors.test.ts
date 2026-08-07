@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isOverloadedError, isQuotaError, retryWhileOverloaded } from "@/lib/gemini";
+import {
+  describeQuotaLimit,
+  isOverloadedError,
+  isQuotaError,
+  retryWhileOverloaded,
+  upstreamFailureMessage,
+} from "@/lib/gemini";
 
 /**
  * Which upstream failures cost the learner a slot.
@@ -129,5 +135,119 @@ describe("retry while overloaded", () => {
     const { waited, wait } = recorder();
     assert.equal(await retryWhileOverloaded(async () => "ok", { wait }), "ok");
     assert.deepEqual(waited, []);
+  });
+});
+
+/**
+ * Which quota was hit, and therefore what the learner is told.
+ *
+ * `isQuotaError` decides the refund; this decides the sentence, and the two are different
+ * questions. Every 429 used to answer "please try again in a few minutes" — correct for
+ * the per-minute quota, false for the per-day one. On the free tier the daily allowance is
+ * the small one (20 requests for gemini-3.6-flash), so the message that could not come
+ * true was the one people actually met, and it sent them retrying for the rest of the day.
+ */
+
+/** Verbatim shape of a real free-tier refusal, trimmed to the parts that are matched. */
+const dailyQuotaError = Object.assign(
+  new Error(
+    JSON.stringify({
+      error: {
+        code: 429,
+        message:
+          "You exceeded your current quota, please check your plan and billing details. " +
+          "* Quota exceeded for metric: generativelanguage.googleapis.com/" +
+          "generate_content_free_tier_requests, limit: 20, model: gemini-3.6-flash " +
+          "Please retry in 48.647673816s.",
+        status: "RESOURCE_EXHAUSTED",
+        details: [
+          {
+            "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+            violations: [
+              {
+                quotaMetric:
+                  "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+                quotaId: "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+                quotaValue: "20",
+              },
+            ],
+          },
+          { "@type": "type.googleapis.com/google.rpc.RetryInfo", retryDelay: "48s" },
+        ],
+      },
+    }),
+  ),
+  { status: 429, name: "ApiError" },
+);
+
+describe("naming the quota that was hit", () => {
+  it("reads the day window and Google's own delay off a real refusal", () => {
+    assert.deepEqual(describeQuotaLimit(dailyQuotaError), {
+      window: "day",
+      retryAfterSeconds: 48,
+    });
+  });
+
+  it("rounds a fractional delay up rather than down", () => {
+    // Google reports 48.647673816s in the prose; a delay is not over until it is over.
+    const fractional = new Error('{"details":[{"retryDelay":"48.6s"}]}');
+    assert.equal(describeQuotaLimit(fractional).retryAfterSeconds, 49);
+  });
+
+  it("tells a per-minute quota apart from a per-day one", () => {
+    const perMinute = new Error('{"quotaId":"GenerateRequestsPerMinutePerProject-FreeTier"}');
+    assert.equal(describeQuotaLimit(perMinute).window, "minute");
+  });
+
+  it("says unknown rather than guessing when no quota is named", () => {
+    // The bug being fixed was a confident wrong answer, so silence has to be reachable.
+    assert.deepEqual(describeQuotaLimit(new Error("RESOURCE_EXHAUSTED")), {
+      window: "unknown",
+      retryAfterSeconds: null,
+    });
+  });
+
+  it("survives values that are not errors at all", () => {
+    for (const value of [null, undefined, 429, "429", {}, []]) {
+      assert.deepEqual(describeQuotaLimit(value), {
+        window: "unknown",
+        retryAfterSeconds: null,
+      });
+    }
+  });
+});
+
+describe("what the learner is told", () => {
+  it("sends someone who hit the daily quota away until tomorrow", () => {
+    const message = upstreamFailureMessage(dailyQuotaError);
+    assert.match(message, /tomorrow/);
+    assert.doesNotMatch(message, /minute/);
+  });
+
+  it("promises no time at all when Google named no quota", () => {
+    const message = upstreamFailureMessage(
+      Object.assign(new Error("RESOURCE_EXHAUSTED"), { status: 429 }),
+    );
+    assert.match(message, /later/);
+    assert.doesNotMatch(message, /tomorrow|minute/);
+  });
+
+  it("still says a minute for an overloaded model, which really is a minute", () => {
+    const busy = Object.assign(new Error("503 UNAVAILABLE"), { status: 503 });
+    assert.match(upstreamFailureMessage(busy), /minute/);
+  });
+
+  it("always says the text is safe and nothing was charged", () => {
+    // True on every path that reaches this helper, and the reason it reassures rather
+    // than alarms. A branch that forgot it would read as lost work.
+    for (const error of [
+      dailyQuotaError,
+      Object.assign(new Error("RESOURCE_EXHAUSTED"), { status: 429 }),
+      Object.assign(new Error("503 UNAVAILABLE"), { status: 503 }),
+    ]) {
+      const message = upstreamFailureMessage(error);
+      assert.match(message, /text has been saved/);
+      assert.match(message, /did not use up one of your evaluations/);
+    }
   });
 });

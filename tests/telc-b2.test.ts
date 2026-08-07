@@ -94,6 +94,20 @@ describe("telc B2 Kriterium I is a count", () => {
     );
   });
 
+  it("tells the model to count, in the step list as well as the criterion", () => {
+    // The rubric was corrected to telc's 2019 grid but buildPrompt's step 3 was not, so
+    // the prompt said "Kriterium I is decided by COUNTING" in its level intro, "Count how
+    // many points are treated" in the criterion, and then — in the last and most
+    // operational instruction — "Kriterium 1 is a holistic judgement, NOT a count of
+    // Leitpunkte". A grader told to count and not to count in one prompt is unpinned.
+    const prompt = buildPrompt(representativeTask(B2));
+    assert.doesNotMatch(prompt, /NOT a count/i);
+    assert.doesNotMatch(prompt, /holistic judgement/i);
+    assert.match(prompt, /count how many points you marked ADDRESSED/i);
+    // The count is what makes a self-chosen aspect substitutable for a printed point.
+    assert.match(prompt, /self-chosen aspect counts the same as a printed Leitpunkt/i);
+  });
+
   it("requires more than one Satzgefüge before a point counts", () => {
     // telc's own threshold, and the opposite of B1's, where a single short sentence does.
     assert.match(B2.leitpunktStatusGuidance!.ADDRESSED, /mehr als ein einziges Satzgefüge/);
@@ -174,6 +188,26 @@ describe("telc B2 Textsorte", () => {
       kriterium("kommunikativeGestaltung").description,
       /Betreffzeile, Anrede, Schlussformel\) are missing AND the Wortschatzspektrum/,
     );
+  });
+
+  it("treats a contextually wrong word as the Wortschatz ground for withholding B", () => {
+    // Kriterium II kept B on a letter offering "Möbel für Gott" and asking about "ein
+    // Abitur, mit dem geleistete Nachts verrechnet werden", with its own comment saying
+    // vocabulary errors impeded clarity — a band promising "hinreichend breites Spektrum"
+    // awarded to a text the examiner had just called unclear. No new rule was needed: the
+    // criterion already withholds B when the Wortschatzspektrum is not adequate for B2.
+    const k2 = kriterium("kommunikativeGestaltung").description;
+    assert.match(k2, /well formed but wrong in context counts under that second ground/i);
+    assert.match(k2, /Fluent German around the error is not a reason to excuse it/i);
+  });
+
+  it("keeps the two guards that stop that becoming a blanket harshening", () => {
+    const k2 = kriterium("kommunikativeGestaltung").description;
+    // B's own descriptor allows vocabulary gaps, so one bad word must not fail a text.
+    assert.match(k2, /Lücken im Wortschatz/);
+    assert.match(k2, /gap and not a failure/i);
+    // And the same error must not be charged here AND under Kriterium III.
+    assert.match(k2, /wrong WORD here and the wrong FORM there/);
   });
 
   it("tells the model the Betreff cannot withhold a band by itself", () => {

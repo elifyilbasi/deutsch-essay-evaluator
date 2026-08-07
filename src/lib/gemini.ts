@@ -365,34 +365,41 @@ Work in this order:
       ? ""
       : " Report it for the record; at this level it carries no automatic penalty, because an off-topic text already earns no content marks."
   }
-2. ${
+2. Read the text sentence by sentence and list EVERY error as a correction (original -> corrected, each with a short explanation). Do this BEFORE you award any band, because the bands have to account for what you find here. Look in particular for the errors that change what the sentence says, which are easy to read past because the German around them is fluent:
+   - a word that is grammatically fine but wrong in context, so the sentence states something absurd or unintended ("ein Abitur, mit dem geleistete Nachts verrechnet werden" for a points system; "Möbel für Gott aufgebaut"; "über eine ausführliche Schule würde ich mich freuen" for eine Auskunft);
+   - a negation that inverts the intent — kein, keine, nicht, niemals — so the writer asks for the opposite of what the task requires ("bräuchte ich kein gelegentlich Hilfe"; "bereit, keine Pakete anzunehmen");
+   - a statement that contradicts another one, or contradicts the Situierung ("beruflich niemals unterwegs" while asking for help because of work travel; mowing a lawn "im Winter");
+   - a word from another language left in the German ("unterwegs and allein").
+   Quote the original exactly as written. Do not silently repair the text as you read: judge what it actually says, not what it evidently meant.
+3. ${
     promptStatuses
       ? `Go through the Leitpunkte one at a time, in the order listed above, and give each a status, applying this level's own wording exactly: ADDRESSED = "${promptStatuses.ADDRESSED}", PARTIAL = "${promptStatuses.PARTIAL}", MISSING = "${promptStatuses.MISSING}".`
       : "Go through the Leitpunkte one at a time, in the order listed above, and decide for each whether the essay treats it adequately (ADDRESSED), only touches it (PARTIAL), or omits it (MISSING)."
-  } Return one entry per Leitpunkt, copying its text verbatim. Do not merge or reorder them.${
+  } A point is not treated adequately merely because sentences point at it: if the errors from step 2 mean the text states the opposite of what the point asks, or names something the task did not ask about, it is at best PARTIAL. Return one entry per Leitpunkt, copying its text verbatim. Do not merge or reorder them.${
     selfChosen
       ? " Then, if the letter develops a further relevant aspect of its own that is not one of the printed Leitpunkte, append one more entry for it with selfChosen=true."
       : ""
   }
-3. ${
+4. ${
     contentPoints
-      ? "For each criterion listed above, pick the ONE band whose descriptor best fits and return it under that criterion's key. The content marks are NOT a criterion — they come from the statuses you assigned in step 2, so do not return a band for them."
+      ? "For each criterion listed above, pick the ONE band whose descriptor best fits and return it under that criterion's key. The content marks are NOT a criterion — they come from the statuses you assigned in step 3, so do not return a band for them."
       : // The band letters are the ones this rubric defines, not a hardcoded A/B/C/D:
         // spelling out "(A, B, C or D)" told a telc B2 examiner to pick from a set that
         // excludes A*, contradicting the very bands listed above it in the same prompt.
-        `For each criterion, pick the ONE band (${bandLetters}) whose descriptor best fits, and return it under that criterion's key.${
-          // Counting Leitpunkte is telc B1's rule for its first criterion, and B2's grid
-          // explicitly is not a count — it weighs Textsorte and Register together with
-          // coverage, and lets a self-chosen aspect stand in for a printed point.
-          selfChosen
-            ? " Kriterium 1 is a holistic judgement, NOT a count of Leitpunkte: weigh the choice of Textsorte and Register together with the coverage rule above."
-            : " For the Leitpunkte criterion, count how many points you marked ADDRESSED and choose the band that matches that count — PARTIAL does not count as adequately treated."
+        // Both B1 and B2 band their first criterion on a count. B2's used to be described
+        // here as "a holistic judgement, NOT a count", which came from a 2013 publisher's
+        // Modelltest; telc's own 2019 grid bands it "Drei Leitpunkte bzw. zwei Leitpunkte
+        // und ein weiterer…", and the rubric was corrected to say so. This step was not,
+        // so the prompt told the model to count twice and then not to count — with the
+        // contradiction in the last and most operational instruction it reads.
+        `For each criterion, pick the ONE band (${bandLetters}) whose descriptor best fits, and return it under that criterion's key. For the Leitpunkte criterion, count how many points you marked ADDRESSED and choose the band that matches that count — PARTIAL does not count as adequately treated.${
+          selfChosen ? " A self-chosen aspect counts the same as a printed Leitpunkt." : ""
         }`
   }
-4. List concrete grammar, spelling, and word-choice errors as corrections (original -> corrected, each with a short explanation).
-5. Write a brief overall prose feedback summary.
+   Your bands must be consistent with the corrections you listed in step 2 — a band is a description of this text, and it cannot say the opposite of what you just found. Check each one against its own wording before you commit to it: a band offered only for errors "die das Verständnis nicht gefährden" is unavailable once you have listed errors that do; a band describing a broad or adequate Wortschatzspektrum is unavailable once you have listed words that make their sentences unintelligible; repeated errors of the same kind (gender, case, agreement) are systematic, not Ausrutscher. Where the text sits between two bands, the errors that block understanding decide it.
+5. Write a brief overall prose feedback summary. Name the errors from step 2 that change the meaning, and say what the sentence ended up saying — that is the single most useful thing the learner can be told, and it is the thing they cannot see for themselves. Do not open with praise for fluency or structure if the text says things it did not mean to say; a reader who has to guess the intent has not understood it. Be encouraging about what genuinely worked, but never at the cost of leaving a meaning-changing error unmentioned.
 
-Do NOT compute totals, percentages, or a final score — the points are derived from your bands automatically. Apply the standards of level ${level} only, neither a higher nor a lower level. Be constructive and specific. Respond only with the JSON described by the response schema.`;
+Do NOT compute totals, percentages, or a final score — the points are derived from your bands automatically. Apply the standards of level ${level} only, neither a higher nor a lower level. Be specific. Respond only with the JSON described by the response schema.`;
 }
 
 let client: GoogleGenAI | null = null;
@@ -514,6 +521,93 @@ export function isQuotaError(error: unknown): boolean {
   return /RESOURCE_EXHAUSTED|\b429\b|\bquota\b/i.test(message);
 }
 
+/**
+ * Which quota a 429 was, and when Google says it clears.
+ *
+ * `isQuotaError` answers whether to refund; this answers what to tell the learner, and
+ * the two are not the same question. Every 429 used to produce "please try again in a few
+ * minutes", which is right for the per-minute quota and false for the per-day one — and
+ * the free tier's daily allowance is small enough to be the one people actually meet.
+ * Told to come back in minutes, they retry into a dead end for the rest of the day.
+ *
+ * Read from `error.message`, because that is where the SDK puts Google's raw JSON body,
+ * and matched rather than parsed — same reason `isQuotaError` matches: the body is not
+ * guaranteed to be the whole message, and a JSON.parse that throws would lose the one
+ * signal we have.
+ */
+export type QuotaLimit = {
+  /** "unknown" when Google named no quota we recognise — never a guess. */
+  window: "day" | "minute" | "unknown";
+  /**
+   * Google's own RetryInfo, in seconds, where it gave one.
+   *
+   * Not a substitute for `window`, and not safe to put in a message on its own: a live
+   * refusal of the *daily* quota came back advertising a 41-second delay. Building the
+   * wording from this number would have swapped one false promise for a more precise
+   * one. The quotaId is the trustworthy signal; this is only ever a refinement of it.
+   */
+  retryAfterSeconds: number | null;
+};
+
+export function describeQuotaLimit(error: unknown): QuotaLimit {
+  const message = error instanceof Error ? error.message : "";
+
+  /*
+    A real refusal, captured from the free tier:
+
+      "violations": [{ "quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+                       "quotaValue": "20" }],
+      { "@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "48s" }
+
+    The quotaId carries the window in its name, which is the only part of this shape
+    stable enough to match on: the metric path and the model name both move.
+  */
+  const window = /PerDay/i.test(message)
+    ? "day"
+    : /PerMinute/i.test(message)
+      ? "minute"
+      : "unknown";
+
+  const retry = /"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/.exec(message);
+
+  return {
+    window,
+    // Rounded up: a delay reported as 48.6s is not over until 49.
+    retryAfterSeconds: retry ? Math.ceil(Number(retry[1])) : null,
+  };
+}
+
+/**
+ * What to tell a learner whose evaluation was refused upstream.
+ *
+ * Shared by both routes that call the model. They had drifted into two different
+ * sentences for the same event, and the retry route additionally answered a quota refusal
+ * with the overload wording, so the level that most needed "come back tomorrow" was the
+ * one certain not to hear it.
+ *
+ * Every branch says the text is safe and that no evaluation was charged, because both are
+ * true on every path here and the two facts are what make the message a reassurance
+ * rather than a loss.
+ */
+export function upstreamFailureMessage(error: unknown): string {
+  const saved = "Your text has been saved and this did not use up one of your evaluations";
+
+  if (isQuotaError(error)) {
+    const { window } = describeQuotaLimit(error);
+    if (window === "day") {
+      return `The shared daily evaluation limit has been reached. ${saved} — please try again tomorrow.`;
+    }
+    if (window === "minute") {
+      return `Too many essays are being evaluated right now. ${saved} — please try again in a minute.`;
+    }
+    // No window named, so promise no time. "Later" is vague on purpose: the whole point
+    // of this helper is that a confident wrong answer is worse than an unhelpful one.
+    return `The evaluation service has hit a usage limit. ${saved} — please try again later.`;
+  }
+
+  return `The evaluation service is busy right now. ${saved} — please open the essay and retry in a minute.`;
+}
+
 export async function evaluateEssay(task: TaskContext): Promise<{
   result: EvaluationResult;
   verdict: ExaminerVerdict;
@@ -525,6 +619,20 @@ export async function evaluateEssay(task: TaskContext): Promise<{
     model,
     contents: buildPrompt(task),
     config: {
+      /*
+        Marking is not a creative task, and the default sampling temperature made it an
+        unreliable one. The same 175-word B2 letter — carrying four meaning-changing
+        errors, among them "ein Abitur, mit dem geleistete Nachts verrechnet werden" —
+        was marked 45/45 with an empty corrections list on one run and 33/45 with all
+        four caught on the next, from a byte-identical prompt. A learner cannot use a
+        grader that answers differently each time they press the button, and the failure
+        mode is the dangerous direction: it tells them nothing is wrong.
+
+        Greedy decoding does not make the model right, but it makes it consistent, so a
+        wrong mark is now a reproducible bug that can be fixed here rather than a coin
+        toss nobody can chase.
+      */
+      temperature: 0,
       responseMimeType: "application/json",
       responseSchema: buildResponseSchema(task.rubric),
     },

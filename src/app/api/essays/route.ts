@@ -9,7 +9,12 @@ import {
   checkEssayLength,
   exceedsBodyLimit,
 } from "@/lib/essayLimits";
-import { evaluateEssay, isOverloadedError, isQuotaError } from "@/lib/gemini";
+import {
+  evaluateEssay,
+  isOverloadedError,
+  isQuotaError,
+  upstreamFailureMessage,
+} from "@/lib/gemini";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -202,11 +207,10 @@ export async function POST(request: Request) {
     if (isQuotaError(error)) {
       await releaseEvaluation(session.user.id);
       return NextResponse.json(
-        {
-          error:
-            "We've hit the shared evaluation limit for now. Your text has been saved — please try again in a few minutes.",
-          id: essay.id,
-        },
+        // Wording comes from the quota Google actually named. This used to promise "a few
+        // minutes" for every 429, including the per-day allowance that does not clear for
+        // hours — sending the learner into a retry loop that could not succeed.
+        { error: upstreamFailureMessage(error), id: essay.id },
         { status: 429 },
       );
     }
@@ -218,11 +222,7 @@ export async function POST(request: Request) {
     if (isOverloadedError(error)) {
       await releaseEvaluation(session.user.id);
       return NextResponse.json(
-        {
-          error:
-            "The evaluation service is busy right now. Your text has been saved and this did not use up one of your evaluations — open the essay and retry in a minute.",
-          id: essay.id,
-        },
+        { error: upstreamFailureMessage(error), id: essay.id },
         { status: 503 },
       );
     }
