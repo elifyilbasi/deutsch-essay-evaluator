@@ -10,21 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskBrief } from "@/components/task-brief";
-import { countWords, formatWordRange, wordsOutOfRange } from "@/lib/wordCount";
+import { countWords, wordsOutOfRange } from "@/lib/wordCount";
 import { MAX_ESSAY_CHARS } from "@/lib/essayLimits";
 import { WritingTimer, useWritingTimer } from "@/components/writing-timer";
 import { safeJson, errorMessage } from "@/lib/safeJson";
 import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
 import { NOT_COPYABLE } from "@/lib/examMaterial";
 import { cn } from "@/lib/utils";
-import {
-  INSTITUTES,
-  LEVELS,
-  parseLevelHint,
-  parseWriteParams,
-  visibleCountFor,
-} from "@/lib/writeParams";
+import { INSTITUTES, LEVELS, parseLevelHint, parseWriteParams } from "@/lib/writeParams";
 import type { Institute, Level } from "@/lib/writeParams";
+import { TaskPicker } from "@/components/task-picker";
+import { buildFacets, filterTasks, type Selection } from "@/lib/taskFilters";
 import {
   DraftNotice,
   DraftStatusLine,
@@ -40,6 +36,8 @@ type PromptSummary = {
   instructions: string;
   leitpunkte: string[];
   register: "DU" | "SIE";
+  /** Why the candidate is writing. Filters the picker; see src/lib/taskFilters.ts. */
+  schreibanlass: string;
   requiresSubject: boolean;
   minWords: number;
   maxWords: number | null;
@@ -53,8 +51,16 @@ type PromptSummary = {
   practice: { attemptCount: number; bestScore: number; maxScore: number } | null;
 };
 
-/** How many tasks are shown before "Show more" is needed. */
-const PAGE_SIZE = 3;
+/**
+ * How many tasks a level needs before the search box and facet chips are worth their
+ * space. Below it the list is short enough to read straight through, and a toolbar
+ * would be three controls for filtering eight things.
+ *
+ * Ten because that is where the old three-at-a-time list started to hurt: A1 seeds
+ * eight tasks and is fine as a plain list, while A2's twelve, B1's twenty and B2's
+ * thirty-nine are not.
+ */
+const TOOLBAR_MIN = 10;
 
 /**
  * Step heading: English leads (the UI language), with the German exam term after
@@ -107,7 +113,8 @@ function WriteWizard() {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [taskQuery, setTaskQuery] = useState("");
+  const [taskFilters, setTaskFilters] = useState<Selection>({});
   const [promptsStatus, setPromptsStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -160,15 +167,9 @@ function WriteWizard() {
         // A revise link pointing at a task that is gone (deactivated, or a stale
         // link) leaves the user on step 2 with a real list rather than a phantom.
         const fromUrl = urlPromptId.current;
-        if (fromUrl) {
-          const index = list.findIndex((p) => p.id === fromUrl);
-          if (index === -1) {
-            toast.info("That task isn't available any more — pick another one below.");
-            urlPromptId.current = null;
-          } else {
-            // The task may sit past the fold; reveal it so step 2 highlights it.
-            setVisibleCount((n) => visibleCountFor(index, PAGE_SIZE, n));
-          }
+        if (fromUrl && !list.some((p) => p.id === fromUrl)) {
+          toast.info("That task isn't available any more — pick another one below.");
+          urlPromptId.current = null;
         }
       })
       .catch(() => {
@@ -184,6 +185,24 @@ function WriteWizard() {
 
   const selectedPrompt = prompts.find((p) => p.id === selectedPromptId) ?? null;
   const wordCount = countWords(content);
+
+  // Built from the tasks this level actually returned, so the controls a learner is
+  // offered are the ones that can divide THIS list — B2 gets an Anlass filter, A2 gets
+  // Register, B1 gets neither because all twenty of its tasks are the same on both.
+  const showToolbar = prompts.length >= TOOLBAR_MIN;
+  const facets = useMemo(
+    () => (showToolbar ? buildFacets(prompts) : []),
+    [prompts, showToolbar],
+  );
+  const visiblePrompts = useMemo(
+    () => (showToolbar ? filterTasks(prompts, taskQuery, taskFilters) : prompts),
+    [prompts, taskQuery, taskFilters, showToolbar],
+  );
+
+  function resetTaskFilters() {
+    setTaskQuery("");
+    setTaskFilters({});
+  }
 
   /**
    * Everything that belongs to one attempt, cleared together. Splitting these up is
@@ -233,8 +252,9 @@ function WriteWizard() {
     setLevel(next);
     setSelectedPromptId(null);
     setPromptsStatus("loading");
-    // A different level means a different task list, so collapse back to page one.
-    setVisibleCount(PAGE_SIZE);
+    // A different level is a different bank, and its facets are built from different
+    // tasks — a chip carried over could name a value the new list has none of.
+    resetTaskFilters();
   }
 
   function selectInstitute(next: Institute) {
@@ -246,7 +266,7 @@ function WriteWizard() {
     setInstitute(next);
     setSelectedPromptId(null);
     setPromptsStatus("loading");
-    setVisibleCount(PAGE_SIZE);
+    resetTaskFilters();
   }
 
   /** Starts the clock on the first keystroke, matching how the exam actually feels. */
@@ -401,54 +421,19 @@ function WriteWizard() {
                 No writing tasks for {institute} {level} yet.
               </p>
             ) : (
-              <>
-                {prompts.slice(0, visibleCount).map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => selectTask(p.id)}
-                    disabled={isSubmitting}
-                    className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                      selectedPromptId === p.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="font-medium">{p.title}</p>
-                      {p.practice && (
-                        <span className="shrink-0 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                          Practiced{p.practice.attemptCount > 1 && ` ${p.practice.attemptCount}×`}
-                          {" · best "}
-                          {p.practice.bestScore}/{p.practice.maxScore}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{p.taskIntro}</p>
-                    {/* Built as one string rather than interleaved JSX: a text run that
-                        wraps to a new line straight after an expression loses its leading
-                        space, which is how this rendered "mindestens 150Wörter". */}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {[
-                        `${p.leitpunkte.length} Punkte`,
-                        `${formatWordRange(p.minWords, p.maxWords)} Wörter`,
-                        p.register === "SIE" ? "formell (Sie)" : "informell (du)",
-                      ].join(" · ")}
-                    </p>
-                  </button>
-                ))}
-
-                {visibleCount < prompts.length && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-                  >
-                    Show more ({prompts.length - visibleCount} remaining)
-                  </Button>
-                )}
-              </>
+              <TaskPicker
+                tasks={prompts}
+                facets={facets}
+                visible={visiblePrompts}
+                query={taskQuery}
+                onQueryChange={setTaskQuery}
+                selection={taskFilters}
+                onSelectionChange={setTaskFilters}
+                selectedId={selectedPromptId}
+                onSelect={selectTask}
+                disabled={isSubmitting}
+                showToolbar={showToolbar}
+              />
             )}
           </CardContent>
         </Card>

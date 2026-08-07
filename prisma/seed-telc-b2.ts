@@ -31,6 +31,10 @@ const base = {
   institute: "TELC",
   level: "B2",
   register: "SIE",
+  // The default rather than the only value: 23 of the 39 tasks here are a complaint
+  // about something advertised, and the rest override this line. B2 is the one level
+  // whose Anlass genuinely varies, which is what makes the picker's filter worth having.
+  schreibanlass: "BESCHWERDE",
   requiresSubject: true,
   minWords: 150,
   // telc B2 prints a floor and no ceiling. See src/lib/rubrics/telc.ts.
@@ -213,6 +217,7 @@ service@aktivpunkt-freiburg.de`,
   {
     ...base,
     title: "Anfrage zu einem Haushaltsgerät",
+    schreibanlass: "ANFRAGE",
     taskIntro: "In der Zeitung haben Sie folgende Anzeige gelesen:",
     stimulusText: `Moderne Technik macht es möglich:
 Keine kostbare Zeit mehr für Hausarbeit verschwenden!
@@ -245,6 +250,7 @@ info@elektrohaus-bergmann.de`,
   {
     ...base,
     title: "Anfrage zu einem Ernährungskurs",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie finden in einer Zeitschrift folgende Anzeige:",
     stimulusText: `Wie ernähre ich mich richtig?
 
@@ -278,6 +284,7 @@ info@ibe-stuttgart.de`,
   {
     ...base,
     title: "Anfrage zu einer Ferienwohnung",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie finden in einer Zeitschrift folgendes Angebot:",
     stimulusText: `Ferienhäuser Seeblick — Urlaub direkt am Wasser
 
@@ -312,6 +319,7 @@ buchung@ferienhaeuser-seeblick.de`,
   {
     ...base,
     title: "Bewerbung als Reiseleiter/in",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "Sie finden in einer Zeitschrift folgendes Angebot:",
     stimulusText: `Reiseleiter/in gesucht!
 
@@ -351,6 +359,7 @@ bewerbung@fernweh-reisen.de`,
   {
     ...base,
     title: "Bewerbung um ein Freiwilliges Soziales Jahr",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "In einer Zeitschrift haben Sie folgende Anzeige gelesen:",
     stimulusText: `Sie wollen sich im sozialen Bereich engagieren,
 praktische Erfahrungen sammeln und sich persönlich weiterentwickeln?
@@ -1001,6 +1010,7 @@ Telefon: 0185-333222 (€ 0,99 pro Minute)`,
   {
     ...base,
     title: "Bewerbung um ein Praktikum im Umweltzentrum",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "Sie suchen eine Praktikantenstelle. Sie finden folgendes Angebot im Internet:",
     stimulusText: `Nordbahn AG
 
@@ -1033,6 +1043,7 @@ praktikum@nordbahn-umwelt.de`,
   {
     ...base,
     title: "Bewerbung um eine Teilzeitstelle im Fitnesscenter",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "In einer Zeitschrift haben Sie folgende Anzeige gelesen:",
     stimulusText: `Jobangebot im Fitnesscenter
 
@@ -1071,6 +1082,7 @@ bewerbung@aktivwerk-esslingen.de`,
   {
     ...base,
     title: "Anfrage zu einem Intensivkurs",
+    schreibanlass: "ANFRAGE",
     taskIntro:
       "Sie möchten Ihr Deutsch weiter verbessern und einen dreiwöchigen Intensivkurs in Deutschland besuchen. Folgendes Angebot haben Sie in einer Zeitung gelesen:",
     stimulusText: `Deutsch in Dresden
@@ -1106,6 +1118,7 @@ info@wortundsatz-dresden.de`,
   {
     ...base,
     title: "Mithilfe bei einem Kulturfestival anbieten",
+    schreibanlass: "ANGEBOT",
     taskIntro: "Lesen Sie folgende Werbeanzeige:",
     stimulusText: `Ehrenamtliche Helferinnen und Helfer gesucht!
 Festival der Kulturen in Köln
@@ -1146,6 +1159,7 @@ festival@club-der-kulturen.net`,
   {
     ...base,
     title: "Anfrage zu einer Kochgruppe",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie finden in einer Zeitschrift folgende Anzeige:",
     stimulusText: `Günstig kochen für Alleinerziehende
 
@@ -1180,6 +1194,7 @@ www.gemeinsam-kochen-frankfurt.de`,
   {
     ...base,
     title: "Anfrage zu einem Museumsbesuch",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie lesen folgende Werbung:",
     stimulusText: `MUSEUM FÜR ALLE
 Natur für uns alle — interkultureller Austausch im NORDLICHT
@@ -1215,6 +1230,7 @@ info@naturmuseum-nordlicht.de`,
   {
     ...base,
     title: "Anfrage an ein Tierheim",
+    schreibanlass: "ANFRAGE",
     taskIntro: "In der Zeitung haben Sie folgende Anzeige gelesen:",
     stimulusText: `TIERE SUCHEN EIN LIEBEVOLLES ZUHAUSE
 TIERHEIM SONNENAU E. V.
@@ -1250,6 +1266,7 @@ info@tierheim-sonnenau.de
   {
     ...base,
     title: "Anfrage zur Vermittlung eines Haustiers",
+    schreibanlass: "ANFRAGE",
     taskIntro: "In der Zeitung haben Sie folgende Anzeige gelesen:",
     stimulusText: `TIERE SUCHEN EIN LIEBEVOLLES ZUHAUSE
 TIERHEIM SONNENAU E. V.
@@ -1294,6 +1311,7 @@ info@tierheim-sonnenau.de
   {
     ...base,
     title: "Bewerbung um ein Praktikum im Kundenservice",
+    schreibanlass: "BEWERBUNG",
     taskIntro:
       "Sie leben in Deutschland und möchten sich beruflich engagieren. Sie haben folgende Anzeige gelesen und möchten sich bewerben:",
     stimulusText: `Praktikum im Kundenservice — sechs Wochen hinter den Kulissen
@@ -1325,6 +1343,7 @@ praktikum@rheinfunk-telekom.de`,
   {
     ...base,
     title: "Bewerbung als Assistenz der Geschäftsführung",
+    schreibanlass: "BEWERBUNG",
     taskIntro:
       "Sie leben in Deutschland und möchten sich beruflich engagieren. Sie haben folgende Anzeige gelesen und möchten sich bewerben:",
     stimulusText: `Kranzler Maschinenbau AG sucht eine Assistenz der Geschäftsführung
@@ -1360,6 +1379,7 @@ bewerbung@kranzler-maschinenbau.de`,
   {
     ...base,
     title: "Anfrage an ein Nachbarschaftsnetzwerk",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie lesen in einer Zeitschrift folgende Anzeige:",
     stimulusText: `Nachbarschaftshilfe im Auenfeld
 

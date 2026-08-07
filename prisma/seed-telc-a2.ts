@@ -55,6 +55,9 @@ import type { SeedPrompt } from "./seed-types";
  * criterion, Kommunikative Gestaltung, is worth one point awarded for Anrede, Gruß and
  * textsortenspezifische Wendungen. No Betreff can earn or cost a mark at this level.
  */
+// No `schreibanlass` here, unlike the other levels: A2 has no dominant Anlass to
+// default to — four replies, three notices, two complaints and one each of the rest —
+// so every task states its own and a base value would only hide that spread.
 const base = {
   institute: "TELC",
   level: "A2",
@@ -78,6 +81,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Bewerbung für die Reinigungsstelle",
+    schreibanlass: "BEWERBUNG",
     taskIntro:
       "Am Schwarzen Brett Ihrer Sprachschule haben Sie ein Angebot für eine Reinigungsstelle gefunden. Die Schule sucht eine Person, die zweimal pro Woche die Klassenräume sauber macht. Sie möchten sich für diese Arbeit bewerben, weil Sie Zeit haben und Erfahrung mit Reinigung haben. Schreiben Sie eine E-Mail an Herrn Berger.",
     instructions: printedInstructions,
@@ -92,6 +96,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Entschuldigung und Frage zum Modelltest",
+    schreibanlass: "ENTSCHULDIGUNG",
     taskIntro:
       "Sie besuchen einen Deutsch-Intensivkurs. Leider können Sie nächste Woche nicht in den Kurs kommen, weil Sie krank sind. Ihre Kursleiterin Frau Keller hat aber gesagt, dass es nächste Woche einen Modelltest für die Prüfung gibt. Sie möchten trotzdem lernen und fragen, wie das geht. Schreiben Sie eine E-Mail an Frau Keller.",
     instructions: printedInstructions,
@@ -106,6 +111,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Geschirrspüler defekt – Bitte um schnelle Hilfe",
+    schreibanlass: "BESCHWERDE",
     taskIntro:
       "Vor sechs Monaten haben Sie bei der Firma Müller Elektro einen Geschirrspüler gekauft. Leider funktioniert das Gerät seit letzter Woche nicht mehr. Sie haben schon oft bei der Firma angerufen, aber niemand geht ans Telefon. Deshalb schreiben Sie jetzt eine E-Mail, um das Problem zu klären. Schreiben Sie an die Firma Müller Elektro.",
     instructions: printedInstructions,
@@ -120,6 +126,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Vertretung im Büro am Montag und Dienstag",
+    schreibanlass: "MITTEILUNG",
     taskIntro:
       "Sie nehmen am nächsten Montag und Dienstag an einem Erste-Hilfe-Kurs in der Volkshochschule teil. Deshalb können Sie an diesen Tagen nicht im Büro arbeiten. Ihre Kollegin Frau Becker soll Sie vertreten. Sie möchten ihr eine Nachricht schreiben, damit sie genau weiß, was sie tun muss. Schreiben Sie eine E-Mail an Frau Becker.",
     instructions: printedInstructions,
@@ -134,6 +141,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Problem mit der Heizung",
+    schreibanlass: "BESCHWERDE",
     taskIntro:
       "In Ihrer Wohnung haben Sie seit einiger Zeit Probleme mit der Heizung. Der Vermieter soll die Heizung reparieren lassen. Leider können Sie Ihren Vermieter telefonisch nicht erreichen, deshalb schreiben Sie einen Brief.",
     instructions: wordGuidance,
@@ -148,6 +156,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Wohnungsanzeige und Gartenarbeit",
+    schreibanlass: "ANFRAGE",
     taskIntro:
       "Sie haben in der Zeitung eine private Wohnungsanzeige gefunden. Es handelt sich um eine 4-Zimmer-Wohnung. Die Miete für die Wohnung ist niedrig. Dafür sollen Sie aber der Hausbesitzerin, Frau Peters (83 Jahre), bei der Gartenarbeit helfen.",
     instructions: `Schreiben Sie über folgende Punkte an die Hausbesitzerin. ${wordGuidance}`,
@@ -162,6 +171,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Vertretung während des Computerkurses",
+    schreibanlass: "MITTEILUNG",
     taskIntro:
       "Sie nehmen am kommenden Montag und Dienstag an einem Computerkurs teil, der in der Volkshochschule stattfindet. Deshalb können Sie nicht ins Büro gehen. Ihre Kollegin, Frau Sommer, soll Sie vertreten.",
     instructions: `Schreiben Sie etwas zu folgenden Punkten an Ihre Kollegin, Frau Sommer. ${wordGuidance}`,
@@ -176,6 +186,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Neuer Termin für unsere Besprechung am Montag",
+    schreibanlass: "MITTEILUNG",
     taskIntro:
       "Sie haben am Montag um 14 Uhr einen Besprechungstermin mit Ihrem Kunden Herrn Berger. Leider müssen Sie den Termin verschieben, weil etwas dazwischengekommen ist. Schreiben Sie eine kurze E-Mail an Herrn Berger.",
     instructions: printedInstructions,
@@ -190,6 +201,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Einladung zur Geburtstagsfeier",
+    schreibanlass: "ANTWORT",
     taskIntro:
       "Sie bekommen eine Nachricht von Elena. Sie kennen Elena aus dem Deutschkurs. Sie schreibt, dass sie am 18. Mai eine Geburtstagsfeier macht. Elena lädt Sie ein und möchte wissen, ob Sie kommen. Antworten Sie.",
     instructions: printedInstructions,
@@ -202,6 +214,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Glückwunsch zur Reise und meine Fragen",
+    schreibanlass: "ANTWORT",
     taskIntro:
       "Ihr Freund Rolf hat bei einem Gewinnspiel eine Reise nach Italien gewonnen. Er schreibt Ihnen, dass er Sie mitnehmen möchte. Sie freuen sich sehr darüber. Antworten Sie.",
     instructions: printedInstructions,
@@ -212,6 +225,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Besuch und Glückwünsche zur Geburt",
+    schreibanlass: "ANTWORT",
     taskIntro:
       "Sie bekommen eine Nachricht von Frau Weber. Sie kennen sie aus der Arbeit. Sie schreibt, dass sie am 15. August ein Baby bekommen hat. Frau Weber freut sich über Besuch. Sie lädt Sie und Ihre Kollegin Sabine ein. Antworten Sie.",
     instructions: printedInstructions,
@@ -221,6 +235,7 @@ export const telcA2Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Einladung zur Hochzeit",
+    schreibanlass: "ANTWORT",
     taskIntro:
       "Sie bekommen eine Nachricht von Jonas. Sie kennen Jonas aus dem Deutschkurs. Er schreibt, dass er am 5. Dezember in Hamburg Lisa heiratet. Jonas lädt Sie ein und fragt, ob Sie kommen. Antworten Sie.",
     instructions: printedInstructions,

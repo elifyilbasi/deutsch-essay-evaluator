@@ -40,6 +40,11 @@ const base = {
   institute: "TELC",
   level: "B1",
   register: "DU",
+  // Every task at this level is a reply to the letter the paper prints, so the Anlass
+  // belongs on the level and not on the task. It is set here rather than left out
+  // because the field is required, and the uniformity is the point: the picker's Anlass
+  // filter hides itself at B1 precisely because this value never varies.
+  schreibanlass: "ANTWORT",
   minWords: 80,
   maxWords: 100,
 } as const;

@@ -33,6 +33,7 @@ export async function GET(request: Request) {
       instructions: true,
       leitpunkte: true,
       register: true,
+      schreibanlass: true,
       requiresSubject: true,
       minWords: true,
       maxWords: true,
