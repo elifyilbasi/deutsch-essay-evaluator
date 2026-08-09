@@ -32,11 +32,27 @@ how to add an institute.
 
 ### Note on migrations
 
-`npx prisma dev`'s bundled local Postgres has flaky shadow-database support in this
-environment, which `prisma migrate dev` needs — `prisma db push` works fine and is enough for
-local iteration. Once you have a real Postgres available (e.g. Neon, see below), run
-`npx prisma migrate dev --name init` against it once to generate a proper migration history
-in `prisma/migrations`, then commit that folder and use `prisma migrate deploy` in production.
+`npx prisma dev`'s bundled local Postgres has flaky shadow-database support, which
+`prisma migrate dev` needs — `prisma db push` works fine and is what local iteration uses.
+
+`prisma/migrations` nevertheless holds a baseline, so production has a history to deploy.
+It was generated from the schema rather than from a database:
+
+```bash
+npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script \
+  > prisma/migrations/<timestamp>_init/migration.sql
+```
+
+That is the same engine `migrate dev` uses; what it skips is executing the result, so the
+first `prisma migrate deploy` against a real Postgres is where it is genuinely proven.
+`migration_lock.toml` is hand-written for the same reason — `migrate dev` would have
+created it.
+
+Local and production are therefore managed differently, deliberately: keep using
+`db push` locally, and let `migrate deploy` own production. A schema change needs the
+same treatment as this one — push it locally, and add a migration for production with the
+command above, using `--from-migrations prisma/migrations` as the `--from` so the diff
+covers only what is new.
 
 ## Deploying to Vercel
 
