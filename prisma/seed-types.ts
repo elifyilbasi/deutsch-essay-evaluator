@@ -5,15 +5,17 @@
  * an incoming letter, while lower-level tasks are often written cold to an institution
  * (e.g. an enquiry to a tourist office), with only the Leitpunkte to work from.
  */
-/** Mirrors the `Schreibanlass` enum in schema.prisma, which documents each member. */
-export type Schreibanlass =
-  | "BESCHWERDE"
-  | "ANFRAGE"
-  | "BEWERBUNG"
-  | "ANGEBOT"
-  | "ENTSCHULDIGUNG"
-  | "MITTEILUNG"
-  | "ANTWORT";
+/**
+ * Re-exported from the generated client rather than spelled out again here.
+ *
+ * It was a hand-written union, which meant the members existed in two places that
+ * nothing checked against each other: adding one to schema.prisma and forgetting this
+ * list would have failed at the seed, not at the type. Taking it from the generator makes
+ * schema.prisma the only place the set is written. prisma/seed.ts already imports from
+ * the generated client, so this adds no dependency the seed did not already have.
+ */
+export type { Schreibanlass } from "../src/generated/prisma/enums";
+import type { Schreibanlass } from "../src/generated/prisma/enums";
 
 export type SeedPrompt = {
   institute: "TELC" | "GOETHE";

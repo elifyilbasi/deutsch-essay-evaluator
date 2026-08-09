@@ -101,6 +101,38 @@ describe("buildFacets", () => {
       "a mix",
     );
   });
+
+  it("offers the practice facet on the very first attempt", () => {
+    // The two-task floor deliberately does not apply here. One practised task out of
+    // thirty-nine is a learner who has started, and "show me the other thirty-eight" is
+    // the most useful thing the toolbar can do for them — withholding it until a second
+    // attempt held it back for exactly the stretch it was worth most.
+    const tasks = [
+      ...bank(38),
+      ...bank(1, { practice: { attemptCount: 1, bestScore: 10, maxScore: 15 } }),
+    ];
+    const practice = buildFacets(tasks).find((f) => f.key === "practice");
+
+    assert.ok(practice, "one practised task is enough to raise the facet");
+    assert.deepEqual(practice.options, [
+      { value: "unpractised", label: "noch nicht geübt", count: 38 },
+      { value: "practised", label: "geübt", count: 1 },
+    ]);
+  });
+
+  it("still ignores a lone Anlass, which the practice exemption must not widen", () => {
+    // The exemption is per facet. A bank of twenty replies and one complaint gets no
+    // Anlass filter, exactly as before — otherwise "practice is special" would have
+    // quietly become "one task is enough for anything".
+    const tasks = [
+      ...bank(20, { schreibanlass: "ANTWORT" }),
+      ...bank(1, { schreibanlass: "BESCHWERDE" }),
+    ];
+    assert.deepEqual(
+      buildFacets(tasks).filter((f) => f.key === "anlass"),
+      [],
+    );
+  });
 });
 
 describe("foldGerman", () => {

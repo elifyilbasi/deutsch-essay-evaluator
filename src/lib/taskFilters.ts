@@ -15,6 +15,8 @@
  * src/lib/writeParams.ts and src/lib/progress.ts.
  */
 
+import type { Schreibanlass } from "@/generated/prisma/enums";
+
 export type FacetKey = "anlass" | "register" | "practice";
 
 export type FacetOption = { value: string; label: string; count: number };
@@ -38,8 +40,13 @@ export type TaskLike = {
  * German labels, because these name exam concepts the learner meets in German. The
  * Register wording is the same pair the task card prints, so a chip and the card it
  * filters cannot describe the same task differently.
+ *
+ * `satisfies` rather than an annotation, and that is the point: it makes the compiler
+ * reject this object the moment schema.prisma gains a Schreibanlass with no label here.
+ * Annotating it `Record<string, string>` would have accepted anything, and the missing
+ * label would have surfaced as a chip reading BESCHWERDE at a learner.
  */
-export const ANLASS_LABELS: Record<string, string> = {
+export const ANLASS_LABELS = {
   BESCHWERDE: "Beschwerde",
   ANFRAGE: "Anfrage",
   BEWERBUNG: "Bewerbung",
@@ -47,7 +54,20 @@ export const ANLASS_LABELS: Record<string, string> = {
   ENTSCHULDIGUNG: "Entschuldigung",
   MITTEILUNG: "Mitteilung",
   ANTWORT: "Antwort",
-};
+} satisfies Record<Schreibanlass, string>;
+
+/**
+ * The label for an Anlass, falling back to the raw value.
+ *
+ * The widening is here and nowhere else. `TaskLike.schreibanlass` is a plain string by
+ * design — it keeps this module structural, so a test can build a task without importing
+ * a generated enum — which leaves exactly one place needing to index the labels with a
+ * string. The fallback covers a row rendered from data older than the label map; the
+ * `satisfies` above is what makes that unreachable for anything the schema defines.
+ */
+export function anlassLabel(value: string): string {
+  return (ANLASS_LABELS as Record<string, string>)[value] ?? value;
+}
 
 /** Also printed on the task card, so a chip and the row it filters cannot disagree. */
 export const REGISTER_LABELS: Record<string, string> = {
@@ -76,24 +96,57 @@ const PRACTICE_LABELS: Record<string, string> = {
  */
 const MIN_OPTION_COUNT = 2;
 
+/**
+ * The floor does not apply to the practice facet, and the reason is that its values are
+ * not of the same kind as the others'.
+ *
+ * An Anlass or a Register with one task behind it is an outlier in the bank — a quirk of
+ * what happens to have been transcribed. "Practised" with one task behind it is not a
+ * quirk of anything: it is a learner who has started, and the split they most want is
+ * exactly the one between the task they have done and the thirty-eight they have not.
+ * Holding that filter back until a second attempt withheld it for the whole of the period
+ * it was most useful.
+ */
+const MIN_PRACTICE_COUNT = 1;
+
 /** The three axes, each a way of reading one value off a task. */
-const FACETS: { key: FacetKey; label: string; labels: Record<string, string>; of: (t: TaskLike) => string }[] = [
-  { key: "anlass", label: "Anlass", labels: ANLASS_LABELS, of: (t) => t.schreibanlass },
-  { key: "register", label: "Register", labels: REGISTER_LABELS, of: (t) => t.register },
+const FACETS: {
+  key: FacetKey;
+  label: string;
+  labels: Record<string, string>;
+  of: (t: TaskLike) => string;
+  /** Tasks a value needs before it counts towards bringing this facet into existence. */
+  minCount: number;
+}[] = [
+  {
+    key: "anlass",
+    label: "Anlass",
+    labels: ANLASS_LABELS,
+    of: (t) => t.schreibanlass,
+    minCount: MIN_OPTION_COUNT,
+  },
+  {
+    key: "register",
+    label: "Register",
+    labels: REGISTER_LABELS,
+    of: (t) => t.register,
+    minCount: MIN_OPTION_COUNT,
+  },
   {
     key: "practice",
     label: "Geübt",
     labels: PRACTICE_LABELS,
     of: (t) => (t.practice ? "practised" : "unpractised"),
+    minCount: MIN_PRACTICE_COUNT,
   },
 ];
 
 /**
  * The facets worth showing for this particular set of tasks, in the order above.
  *
- * A facet survives only if at least two of its values cover `MIN_OPTION_COUNT` tasks
- * each. Options come back in descending count so the chip a learner most likely wants
- * is first, with ties broken by label so the order is stable between renders.
+ * A facet survives only if at least two of its values clear its own `minCount`. Options
+ * come back in descending count so the chip a learner most likely wants is first, with
+ * ties broken by label so the order is stable between renders.
  */
 export function buildFacets(tasks: TaskLike[]): Facet[] {
   const facets: Facet[] = [];
@@ -105,7 +158,7 @@ export function buildFacets(tasks: TaskLike[]): Facet[] {
       counts.set(value, (counts.get(value) ?? 0) + 1);
     }
 
-    const substantial = [...counts.values()].filter((n) => n >= MIN_OPTION_COUNT).length;
+    const substantial = [...counts.values()].filter((n) => n >= facet.minCount).length;
     if (substantial < 2) continue;
 
     const options = [...counts.entries()]

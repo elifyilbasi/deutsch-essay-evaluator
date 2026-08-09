@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatWordRange } from "@/lib/wordCount";
 import {
-  ANLASS_LABELS,
+  anlassLabel,
   REGISTER_LABELS,
   hasActiveFilters,
   toggleFacetValue,
@@ -205,7 +205,7 @@ function TaskRow({
       <div className="mt-1 flex flex-wrap items-center gap-2">
         {showAnlass && (
           <Badge variant="secondary">
-            {ANLASS_LABELS[task.schreibanlass] ?? task.schreibanlass}
+            {anlassLabel(task.schreibanlass)}
           </Badge>
         )}
         {/* Built as one string rather than interleaved JSX: a text run that

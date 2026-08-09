@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schreibanlass } from "@/generated/prisma/enums";
 import { telcRubrics } from "@/lib/rubrics";
 import { formatWordRange } from "@/lib/wordCount";
 import { telcA1Prompts } from "../prisma/seed-telc-a1";
@@ -103,15 +104,10 @@ describe("the bank's identity key holds", () => {
  * that a level claiming to vary really does.
  */
 describe("the Schreibanlass is classified, not inherited by accident", () => {
-  const KNOWN = new Set([
-    "BESCHWERDE",
-    "ANFRAGE",
-    "BEWERBUNG",
-    "ANGEBOT",
-    "ENTSCHULDIGUNG",
-    "MITTEILUNG",
-    "ANTWORT",
-  ]);
+  // Read from the generated enum, not retyped. A hardcoded list here would have made
+  // this test fail on a legitimately added member — and fail claiming schema.prisma does
+  // not define it, which would have been the one thing that was certainly false.
+  const KNOWN = new Set<string>(Object.keys(Schreibanlass));
 
   it("gives every task a Schreibanlass the schema knows", () => {
     for (const [, bank] of banks) {
