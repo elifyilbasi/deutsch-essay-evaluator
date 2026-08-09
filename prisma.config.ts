@@ -11,21 +11,25 @@ export default defineConfig({
   },
   datasource: {
     /*
-      What the CLI connects with — migrate, db push, db seed — which is not always what
-      the app connects with.
+      One variable, always this one, so that what the CLI touches is never a question of
+      precedence between two.
 
-      In production DATABASE_URL is Neon's pooled endpoint, and the pooler cannot run
-      migrations: it is PgBouncer in transaction mode, while Prisma Migrate needs a
-      session it can hold an advisory lock on. DIRECT_URL is the same database without
-      the pooler, and this is the only place that distinction has to be made.
+      That matters because the production database cannot be reached the same way twice.
+      Neon serves a pooled endpoint and a direct one, and the app must use the pooled host
+      while migrations must not: the pooler is PgBouncer in transaction mode, and Prisma
+      Migrate needs a session it can hold an advisory lock on. See README.
 
-      Falling back rather than requiring it, because locally there is no pooler to
-      bypass: `prisma dev` hands out one direct connection and DATABASE_URL is already
-      it. An unset DIRECT_URL is the correct local state, not a missing one.
+      The obvious fix is a second variable the CLI prefers — and it was written that way
+      first. It is not worth it. A DIRECT_URL left in .env silently repoints every local
+      `db push` and `db seed` at production, so the cost of forgetting to remove it is
+      reshaping the live database while you believe you are working locally. Overriding
+      this one inline, for the one command that needs it, cannot be forgotten:
 
-      Prisma 7 has no `directUrl` datasource key — that was a schema attribute in 5 and
-      6 — so the choice is made here.
+        DATABASE_URL="<unpooled url>" npx prisma migrate deploy
+
+      Prisma 7 has no `directUrl` datasource key either — that was a schema attribute in
+      5 and 6 — so there is no third option that keeps both in the schema.
     */
-    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
+    url: process.env["DATABASE_URL"],
   },
 });

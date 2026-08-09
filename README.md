@@ -88,16 +88,19 @@ covers only what is new.
    Optional: `GEMINI_MODEL` (defaults to `gemini-flash-latest`) and `DAILY_EVAL_LIMIT`
    (defaults to `5`). See `.env.example` for the reasoning behind each.
 
-3. Apply the schema and load the prompt bank, from your own machine, with `DIRECT_URL` set
-   to the **unpooled** Neon string — Neon's pooled endpoint is PgBouncer in transaction
-   mode and cannot run migrations. `prisma.config.ts` prefers `DIRECT_URL` for exactly
-   this, so the CLI takes the direct connection while the deployed app keeps the pooled
-   one:
+3. Apply the schema and load the prompt bank, from your own machine, overriding
+   `DATABASE_URL` inline with the **unpooled** Neon string — the one whose host does *not*
+   contain `-pooler`. The pooled endpoint is PgBouncer in transaction mode and cannot run
+   migrations, so this is the one command in the project that must not use the URL the
+   deployed app uses:
 
    ```bash
-   DIRECT_URL="postgres://…@ep-xxx.REGION.aws.neon.tech/neondb?sslmode=require" \
+   DATABASE_URL="postgres://…@ep-xxx.REGION.aws.neon.tech/neondb?sslmode=require" \
      npx prisma migrate deploy && npx prisma db seed
    ```
+
+   Inline, not exported and not added to `.env`. An unpooled production URL left sitting
+   in `.env` makes the next ordinary `npx prisma db push` reshape the live database.
 
    `migrate deploy` applies `prisma/migrations`; `db seed` is safe to re-run, since it
    withholds updates from any task that already has essays written against it.
