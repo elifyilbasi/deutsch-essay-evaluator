@@ -75,14 +75,3 @@ export function parseWriteParams(params: ParamReader): WriteParams | null {
   if (!institute || !level || !promptId) return null;
   return { institute, level, promptId };
 }
-
-/**
- * How many task cards to show so that the one at `index` is among them. A revise
- * link can point at a task sitting past the fold, and step 2 would otherwise
- * highlight nothing while steps 3 and 4 render the task perfectly well.
- */
-export function visibleCountFor(index: number, pageSize: number, current = pageSize): number {
-  if (index < 0) return current;
-  const needed = Math.ceil((index + 1) / pageSize) * pageSize;
-  return Math.max(current, needed);
-}

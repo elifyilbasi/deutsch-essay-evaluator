@@ -23,6 +23,9 @@ const base = {
   instructions:
     "Schreiben Sie zu jedem Punkt ein bis zwei Sätze. Vergessen Sie nicht den passenden Anfang und Gruß am Schluss.",
   register: "SIE",
+  // Four of the six write to an institution to ask for something; the complaint and the
+  // change-of-number notice override this.
+  schreibanlass: "ANFRAGE",
   requiresSubject: false,
   minWords: 25,
   maxWords: 40,
@@ -46,6 +49,7 @@ export const telcA1Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Verspätete Lieferung",
+    schreibanlass: "BESCHWERDE",
     taskIntro: "Ihr Paket ist noch nicht angekommen. Schreiben Sie eine E-Mail an die Post.",
     leitpunkte: ["Welches Paket?", "Seit wann warten Sie?", "Bitte um Information"],
     sourceFile: "telc-uebungstest-02.png",
@@ -67,6 +71,7 @@ export const telcA1Prompts: SeedPrompt[] = [
   {
     ...base,
     title: "Mitteilung an die Schule über eine neue Telefonnummer",
+    schreibanlass: "MITTEILUNG",
     taskIntro:
       "Sie haben eine neue Telefonnummer. Schreiben Sie eine E-Mail an die Schule.",
     leitpunkte: ["Ihre neue Telefonnummer", "Ab wann sie gültig ist", "Bitte um Bestätigung"],

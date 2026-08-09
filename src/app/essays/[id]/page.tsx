@@ -13,6 +13,7 @@ import { EvaluateEssayButton } from "@/components/evaluate-essay-button";
 import { formatDuration } from "@/lib/formatDuration";
 import { getRubric } from "@/lib/rubrics";
 import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
+import { NOT_COPYABLE } from "@/lib/examMaterial";
 import type { CriterionScore, Correction, LeitpunktCoverage } from "@/lib/gemini";
 
 export default async function EssayDetailPage({
@@ -77,7 +78,7 @@ export default async function EssayDetailPage({
       </div>
 
       {essay.prompt.stimulusText && (
-        <Card>
+        <Card className={NOT_COPYABLE}>
           <CardHeader>
             {/* Named by what it is, on the same signal the prompt uses: a B1 task quotes
                 a letter from a person, a B2 task reprints an advertisement and has no
@@ -178,7 +179,15 @@ export default async function EssayDetailPage({
             <CardContent>
               <LeitpunktCoverageList
                 coverage={evaluation.leitpunktCoverage as unknown as LeitpunktCoverage[]}
-                expectedTotal={rubric?.selfChosenAspects?.expectedTotal}
+                expectedTotal={
+                  // Two different ways a level asks for fewer points than it prints, and
+                  // both have to reach the list or it reports a complete task as short:
+                  // B2 lets one of three be a self-chosen aspect, while A2 prints four
+                  // and marks the best three ("Wählen Sie drei aus"). The Inhaltspunkte
+                  // row already scores A2 on three; this is the same number.
+                  rubric?.selfChosenAspects?.expectedTotal ??
+                  rubric?.contentPointScoring?.counted
+                }
               />
             </CardContent>
           </Card>

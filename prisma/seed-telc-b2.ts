@@ -1,10 +1,10 @@
 /**
  * TELC B2 "Schriftlicher Ausdruck" tasks, modelled on the practice papers in
- * exam-materials/telc/b2/ (telc-uebungstest-01..33.png).
+ * exam-materials/telc/b2/ (telc-uebungstest-01..33.png and 34..37.pdf).
  *
  * UNLIKE the A1, A2 and B1 banks, the stimulus texts here are ORIGINAL. Those levels
  * quote a short personal letter; a B2 task reprints a full commercial advertisement —
- * company, address, contact details and ad copy — and 33 of those transcribed into a
+ * company, address, contact details and ad copy — and dozens of those transcribed into a
  * database that gets deployed is precisely what exam-materials/README.md warns against.
  * So every firm, product, price and address below is invented. The format is the
  * papers': same Anzeige-then-Aufgabe shape, same register, same Leitpunkt style.
@@ -31,6 +31,10 @@ const base = {
   institute: "TELC",
   level: "B2",
   register: "SIE",
+  // The default rather than the only value: 23 of the 39 tasks here are a complaint
+  // about something advertised, and the rest override this line. B2 is the one level
+  // whose Anlass genuinely varies, which is what makes the picker's filter worth having.
+  schreibanlass: "BESCHWERDE",
   requiresSubject: true,
   minWords: 150,
   // telc B2 prints a floor and no ceiling. See src/lib/rubrics/telc.ts.
@@ -213,6 +217,7 @@ service@aktivpunkt-freiburg.de`,
   {
     ...base,
     title: "Anfrage zu einem Haushaltsgerät",
+    schreibanlass: "ANFRAGE",
     taskIntro: "In der Zeitung haben Sie folgende Anzeige gelesen:",
     stimulusText: `Moderne Technik macht es möglich:
 Keine kostbare Zeit mehr für Hausarbeit verschwenden!
@@ -245,6 +250,7 @@ info@elektrohaus-bergmann.de`,
   {
     ...base,
     title: "Anfrage zu einem Ernährungskurs",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie finden in einer Zeitschrift folgende Anzeige:",
     stimulusText: `Wie ernähre ich mich richtig?
 
@@ -278,6 +284,7 @@ info@ibe-stuttgart.de`,
   {
     ...base,
     title: "Anfrage zu einer Ferienwohnung",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie finden in einer Zeitschrift folgendes Angebot:",
     stimulusText: `Ferienhäuser Seeblick — Urlaub direkt am Wasser
 
@@ -312,6 +319,7 @@ buchung@ferienhaeuser-seeblick.de`,
   {
     ...base,
     title: "Bewerbung als Reiseleiter/in",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "Sie finden in einer Zeitschrift folgendes Angebot:",
     stimulusText: `Reiseleiter/in gesucht!
 
@@ -351,6 +359,7 @@ bewerbung@fernweh-reisen.de`,
   {
     ...base,
     title: "Bewerbung um ein Freiwilliges Soziales Jahr",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "In einer Zeitschrift haben Sie folgende Anzeige gelesen:",
     stimulusText: `Sie wollen sich im sozialen Bereich engagieren,
 praktische Erfahrungen sammeln und sich persönlich weiterentwickeln?
@@ -1001,6 +1010,7 @@ Telefon: 0185-333222 (€ 0,99 pro Minute)`,
   {
     ...base,
     title: "Bewerbung um ein Praktikum im Umweltzentrum",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "Sie suchen eine Praktikantenstelle. Sie finden folgendes Angebot im Internet:",
     stimulusText: `Nordbahn AG
 
@@ -1033,6 +1043,7 @@ praktikum@nordbahn-umwelt.de`,
   {
     ...base,
     title: "Bewerbung um eine Teilzeitstelle im Fitnesscenter",
+    schreibanlass: "BEWERBUNG",
     taskIntro: "In einer Zeitschrift haben Sie folgende Anzeige gelesen:",
     stimulusText: `Jobangebot im Fitnesscenter
 
@@ -1071,6 +1082,7 @@ bewerbung@aktivwerk-esslingen.de`,
   {
     ...base,
     title: "Anfrage zu einem Intensivkurs",
+    schreibanlass: "ANFRAGE",
     taskIntro:
       "Sie möchten Ihr Deutsch weiter verbessern und einen dreiwöchigen Intensivkurs in Deutschland besuchen. Folgendes Angebot haben Sie in einer Zeitung gelesen:",
     stimulusText: `Deutsch in Dresden
@@ -1106,6 +1118,7 @@ info@wortundsatz-dresden.de`,
   {
     ...base,
     title: "Mithilfe bei einem Kulturfestival anbieten",
+    schreibanlass: "ANGEBOT",
     taskIntro: "Lesen Sie folgende Werbeanzeige:",
     stimulusText: `Ehrenamtliche Helferinnen und Helfer gesucht!
 Festival der Kulturen in Köln
@@ -1146,6 +1159,7 @@ festival@club-der-kulturen.net`,
   {
     ...base,
     title: "Anfrage zu einer Kochgruppe",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie finden in einer Zeitschrift folgende Anzeige:",
     stimulusText: `Günstig kochen für Alleinerziehende
 
@@ -1180,6 +1194,7 @@ www.gemeinsam-kochen-frankfurt.de`,
   {
     ...base,
     title: "Anfrage zu einem Museumsbesuch",
+    schreibanlass: "ANFRAGE",
     taskIntro: "Sie lesen folgende Werbung:",
     stimulusText: `MUSEUM FÜR ALLE
 Natur für uns alle — interkultureller Austausch im NORDLICHT
@@ -1215,6 +1230,7 @@ info@naturmuseum-nordlicht.de`,
   {
     ...base,
     title: "Anfrage an ein Tierheim",
+    schreibanlass: "ANFRAGE",
     taskIntro: "In der Zeitung haben Sie folgende Anzeige gelesen:",
     stimulusText: `TIERE SUCHEN EIN LIEBEVOLLES ZUHAUSE
 TIERHEIM SONNENAU E. V.
@@ -1250,6 +1266,7 @@ info@tierheim-sonnenau.de
   {
     ...base,
     title: "Anfrage zur Vermittlung eines Haustiers",
+    schreibanlass: "ANFRAGE",
     taskIntro: "In der Zeitung haben Sie folgende Anzeige gelesen:",
     stimulusText: `TIERE SUCHEN EIN LIEBEVOLLES ZUHAUSE
 TIERHEIM SONNENAU E. V.
@@ -1277,5 +1294,118 @@ info@tierheim-sonnenau.de
       "Fragen Sie nach Details der Vermittlung.",
     ],
     sourceFile: "telc-uebungstest-32.png",
+  },
+
+  // Papers 34, 36 and 37. The first two are the Bewerbungsbrief variant, which prints its
+  // situation in the intro line ("Sie leben in Deutschland und möchten sich beruflich
+  // engagieren…") rather than above the Leitpunkte, names the Textsorte outright, and
+  // lists the Leitpunkte as bare noun phrases — "Ihre Ausbildung / Ihre Berufsausbildung",
+  // "Ihre Interessen und Vorlieben" — repeated near-verbatim across papers. That
+  // repetition is the format, not an oversight, so it is kept here.
+  //
+  // Paper 35 is deliberately absent, so the gap in the numbering is not one to fill: its
+  // Leitpunkte are word-for-word those of "Mithilfe bei einem Kulturfestival anbieten"
+  // (paper 27) and the situation is the same volunteer-at-a-festival one, differing only
+  // in that 35 calls the Textsorte a Bewerbungsbrief. Two tasks that close a rotation on
+  // the same four points is a worse bank than one, and 27 was here first.
+  {
+    ...base,
+    title: "Bewerbung um ein Praktikum im Kundenservice",
+    schreibanlass: "BEWERBUNG",
+    taskIntro:
+      "Sie leben in Deutschland und möchten sich beruflich engagieren. Sie haben folgende Anzeige gelesen und möchten sich bewerben:",
+    stimulusText: `Praktikum im Kundenservice — sechs Wochen hinter den Kulissen
+
+Wir sind ein regionaler Anbieter für Internet, Festnetz und Mobilfunk und betreuen
+rund 80.000 Haushalte im Ruhrgebiet.
+
+Für Studierende, die wissen möchten, was am anderen Ende der Serviceleitung passiert,
+öffnen wir sechs Wochen lang unsere Abteilung: Sie sitzen bei erfahrenen Kolleginnen
+und Kollegen mit, verfolgen technische Störungsmeldungen von der Annahme bis zur
+Lösung und lernen, wie Vertrags- und Rechnungsfragen bearbeitet werden.
+
+Vorkenntnisse sind nicht nötig, Freude am Gespräch schon.
+
+Rheinfunk Telekom GmbH
+Personalabteilung
+Postfach 3208
+47051 Duisburg
+praktikum@rheinfunk-telekom.de`,
+    instructions: aufgabe("Schreiben Sie einen Bewerbungsbrief an die oben aufgeführte Firma."),
+    leitpunkte: [
+      "Ihre Ausbildung / Ihre Berufsausbildung",
+      "Ihre Interessen und Vorlieben",
+      "Grund für die Berufsrichtung",
+      "Grund für die Praktikantenstelle in Deutschland",
+    ],
+    sourceFile: "telc-uebungstest-34.pdf",
+  },
+  {
+    ...base,
+    title: "Bewerbung als Assistenz der Geschäftsführung",
+    schreibanlass: "BEWERBUNG",
+    taskIntro:
+      "Sie leben in Deutschland und möchten sich beruflich engagieren. Sie haben folgende Anzeige gelesen und möchten sich bewerben:",
+    stimulusText: `Kranzler Maschinenbau AG sucht eine Assistenz der Geschäftsführung
+
+Mit mehreren Jahren Berufserfahrung und mit guten Sprachkenntnissen in Englisch und
+Französisch.
+
+Wir:
+• fertigen Verpackungsanlagen für die Lebensmittelindustrie
+• arbeiten mit Kundinnen und Kunden im In- und Ausland
+• bieten einen ruhigen Arbeitsplatz, ein gutes Gehalt, Urlaubsgeld, Betriebsrente
+  und ein 13. Monatsgehalt
+
+Sie:
+• sind etwa 28 bis 40 Jahre alt
+• arbeiten gern selbstständig
+• gehen sicher mit den gängigen Büroprogrammen um
+• lösen Probleme eigenverantwortlich
+
+Kranzler Maschinenbau AG
+Postfach 88
+76133 Karlsruhe
+bewerbung@kranzler-maschinenbau.de`,
+    instructions: aufgabe("Schreiben Sie einen Bewerbungsbrief an die oben aufgeführte Firma."),
+    leitpunkte: [
+      "Ihre Ausbildung / Ihre Berufsausbildung",
+      "Grund für Ihre Stellensuche in Deutschland",
+      "Ihre Interessen und Vorlieben",
+      "Grund für diese Berufsrichtung",
+    ],
+    sourceFile: "telc-uebungstest-36.pdf",
+  },
+  {
+    ...base,
+    title: "Anfrage an ein Nachbarschaftsnetzwerk",
+    schreibanlass: "ANFRAGE",
+    taskIntro: "Sie lesen in einer Zeitschrift folgende Anzeige:",
+    stimulusText: `Nachbarschaftshilfe im Auenfeld
+
+Brauchen Sie für ein paar Stunden ein Auto?
+Fehlt jemand, der mit Ihren Kindern die Hausaufgaben durchgeht?
+Möchten Sie sich kurz eine Leiter oder einen Rasenmäher ausleihen?
+Suchen Sie Unterstützung beim Einkaufen, im Garten oder bei kleinen Reparaturen?
+
+Über unser Stadtteilnetzwerk finden Sie schnell jemanden, der weiterhilft — und
+umgekehrt haben auch Sie bestimmt etwas anzubieten.
+
+Unser Ziel ist einfach: Menschen im Stadtteil miteinander in Kontakt bringen. Wer
+einander hilft, macht sich das Leben leichter.
+
+Melden Sie sich an, dann vermitteln wir Ihnen Ihre Nachbarinnen und Nachbarn.
+Oder kommen Sie einfach in der Gerberstraße 7 vorbei.
+
+Stadtteilnetzwerk Auenfeld
+kontakt@netzwerk-auenfeld.de`,
+    instructions: aufgabe("Schreiben Sie einen Brief, in dem Sie um mehr Informationen bitten."),
+    leitpunkte: [
+      "Beschreiben Sie, welche Hilfe Sie benötigen.",
+      "Legen Sie dar, was Sie anbieten könnten.",
+      "Bitten Sie um eine Erläuterung, wie der Austausch von Hilfen genau funktioniert.",
+      "Fragen Sie nach weiteren Einzelheiten.",
+    ],
+    sourceFile: "telc-uebungstest-37.pdf",
   },
 ];

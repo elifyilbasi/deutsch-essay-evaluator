@@ -650,3 +650,57 @@ failed on any route change since; the build regenerated it.
 - Production needs its own callback URL on the OAuth client
   (`https://<domain>/api/auth/callback/google`) and both variables set wherever it runs.
 - `passwordHash` can be dropped once this has proven itself.
+
+## Aufgabe picker: search and self-hiding facets
+
+Step 2 of `/write` revealed three tasks at a time behind "Show more", which is thirteen
+presses to reach the end of telc B2's thirty-nine, with no search and no way to see what
+was still unpractised.
+
+The obvious fix — group by Textsorte — only works at B2. So grouping is not the
+structure. Facets are **derived from the tasks that were loaded**, and one appears only
+when at least two of its values cover two tasks each. One code path, no per-level branch:
+
+| Level | Tasks | Toolbar shows |
+|---|---|---|
+| A1 | 8 | nothing — below `TOOLBAR_MIN`, plain list as before |
+| A2 | 12 | Anlass + Register (9 formell / 3 informell) |
+| B1 | 20 | search + practice only; all twenty are the same Anlass and register |
+| B2 | 39 | Anlass (Beschwerde 23 / Anfrage 9 / Bewerbung 6 / Angebot 1) |
+
+The two-task floor is what keeps B1's lone formal task and A1's lone informal one from
+each spawning a filter that isolates one row.
+
+- [x] `Schreibanlass` enum + required `Prompt.schreibanlass`. No `SONSTIGES`: as with
+      `Level`'s absent C1, nothing carries a member nothing produces.
+- [x] Annotated all 79 seeded tasks from each task's Situierung, not its title — three
+      titles name the topic and would have classified wrong (B1 "Beschwerde über einen
+      Sprachkurs" is a reply; A2 "Einladung zur Geburtstagsfeier" is a reply to one;
+      B2 "Protest gegen den Abriss" says "Beschwerdebrief" outright).
+- [x] `src/lib/taskFilters.ts` — `buildFacets`, `filterTasks`, `foldGerman`. Pure.
+- [x] `src/components/task-picker.tsx` — toolbar, bounded scroll list, empty state.
+- [x] Dropped `PAGE_SIZE`/`visibleCount`/"Show more" and the now-dead `visibleCountFor`.
+
+### Verified
+
+235 tests (17 new in `tests/task-filters.test.ts`, 3 in `seed-bank`), `tsc --noEmit` and
+eslint all clean. Driven in the browser at every level: B2 39→6 on one chip and →1 with
+`praktikum umwelt`; `beschwerde uber eine radtour` finds `Beschwerde über eine Radtour`,
+so the diacritic folding works; A2 shows both facets; B1 shows neither Anlass nor
+Register; A1 renders with no toolbar, no chips and no scroll box.
+
+A `?promptId=` revise link naming task 37 of 39 selects it **and** scrolls it into view
+inside the box — the deep-link behaviour `visibleCountFor` existed to provide.
+
+Backfill note: the column was added nullable, backfilled for all 79 rows, then made
+required. A plain reseed would not have done it — `prisma/seed.ts` withholds updates from
+tasks that have essays, and 9 prompts do. That guard protects operator-authored content;
+a brand-new classification field has none, so backfilling around it was right.
+
+### Open
+
+- The dev server must be restarted after this lands: a running Next.js process keeps the
+  Prisma client it booted with, and the added column 500s until it does.
+- `Schreibanlass` is unused outside the picker. If it ever informs marking it needs
+  checking against telc's own vocabulary first — it is deliberately *not* Textsorte,
+  which the rubrics already fix per level.

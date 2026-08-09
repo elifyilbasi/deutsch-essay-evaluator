@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { formatWordRange, wordsOutOfRange as isOutOfRange } from "@/lib/wordCount";
 import { reflowSoftWraps } from "@/lib/reflowSoftWraps";
+import { NOT_COPYABLE } from "@/lib/examMaterial";
+import { cn } from "@/lib/utils";
 
 /**
  * What the candidate was actually asked to do: the instruction line, the numbered
@@ -57,7 +59,8 @@ export function TaskBrief({
     actualSeconds > timeLimitMinutes * 60;
 
   return (
-    <div className="space-y-4">
+    // One wrapper covers the instruction line, the Leitpunkte and the chips — see NOT_COPYABLE.
+    <div className={cn("space-y-4", NOT_COPYABLE)}>
       <div>
         {/* `whitespace-pre-wrap`, because the telc Aufgabe is not one paragraph: it
             offers a choice between a) and b), each on its own line. A plain <p>

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schreibanlass } from "@/generated/prisma/enums";
 import { telcRubrics } from "@/lib/rubrics";
 import { formatWordRange } from "@/lib/wordCount";
 import { telcA1Prompts } from "../prisma/seed-telc-a1";
@@ -92,5 +93,53 @@ describe("the bank's identity key holds", () => {
         assert.ok(task.leitpunkte.length > 0, `"${task.title}" has no Leitpunkte`);
       }
     }
+  });
+});
+
+/**
+ * The Schreibanlass drives the picker's Anlass filter, and it is the one field here a
+ * new task can plausibly be given by copying a neighbour's `base` without thinking.
+ * These do not check any particular classification — that is a judgement about the
+ * task's Situierung, made in the seed files — only that the field says something, and
+ * that a level claiming to vary really does.
+ */
+describe("the Schreibanlass is classified, not inherited by accident", () => {
+  // Read from the generated enum, not retyped. A hardcoded list here would have made
+  // this test fail on a legitimately added member — and fail claiming schema.prisma does
+  // not define it, which would have been the one thing that was certainly false.
+  const KNOWN = new Set<string>(Object.keys(Schreibanlass));
+
+  it("gives every task a Schreibanlass the schema knows", () => {
+    for (const [, bank] of banks) {
+      for (const task of bank) {
+        assert.ok(
+          KNOWN.has(task.schreibanlass),
+          `"${task.title}" has Schreibanlass ${task.schreibanlass}, which schema.prisma does not define`,
+        );
+      }
+    }
+  });
+
+  it("keeps B2 varied enough for the filter to be worth showing", () => {
+    // The filter appears only where two values cover two tasks each (see
+    // src/lib/taskFilters.ts). B2 is the bank that earns it, and a future edit that
+    // flattened it would silently remove the control from the level that needs it most.
+    const counts = new Map<string, number>();
+    for (const task of telcB2Prompts) {
+      counts.set(task.schreibanlass, (counts.get(task.schreibanlass) ?? 0) + 1);
+    }
+    const substantial = [...counts.values()].filter((n) => n >= 2).length;
+    assert.ok(
+      substantial >= 2,
+      `B2 needs two Anlässe of two or more tasks for its filter to appear; got ${substantial}`,
+    );
+  });
+
+  it("keeps B1 uniform, which is why B1 shows no Anlass filter", () => {
+    // Not a rule the level must obey forever — if a B1 task with a different Anlass is
+    // added, the filter appears and this expectation should be updated deliberately
+    // rather than a mixed bank being mistaken for the status quo.
+    const values = new Set(telcB1Prompts.map((t) => t.schreibanlass));
+    assert.deepEqual([...values], ["ANTWORT"]);
   });
 });

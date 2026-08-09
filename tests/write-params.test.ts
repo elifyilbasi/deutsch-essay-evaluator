@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseWriteParams, visibleCountFor, LEVELS, INSTITUTES } from "@/lib/writeParams";
+import { parseWriteParams, LEVELS, INSTITUTES } from "@/lib/writeParams";
 
 /**
  * A "revise this task" link may only preselect what the wizard would let you pick by
@@ -77,23 +77,3 @@ describe("parseWriteParams", () => {
   });
 });
 
-describe("visibleCountFor", () => {
-  it("leaves the count alone when the task is already visible", () => {
-    assert.equal(visibleCountFor(0, 3), 3);
-    assert.equal(visibleCountFor(2, 3), 3);
-  });
-
-  it("reveals a task sitting past the fold", () => {
-    assert.equal(visibleCountFor(3, 3), 6);
-    assert.equal(visibleCountFor(5, 3), 6);
-    assert.equal(visibleCountFor(6, 3), 9);
-  });
-
-  it("never shrinks an already-expanded list", () => {
-    assert.equal(visibleCountFor(0, 3, 9), 9);
-  });
-
-  it("handles a task that is not in the list", () => {
-    assert.equal(visibleCountFor(-1, 3), 3);
-  });
-});

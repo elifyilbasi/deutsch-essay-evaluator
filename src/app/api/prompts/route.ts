@@ -33,6 +33,7 @@ export async function GET(request: Request) {
       instructions: true,
       leitpunkte: true,
       register: true,
+      schreibanlass: true,
       requiresSubject: true,
       minWords: true,
       maxWords: true,
@@ -42,6 +43,11 @@ export async function GET(request: Request) {
 
   // The exam time limit lives in the rubric (server-only), so attach it here for the client.
   const rubric = getRubric(institute, level);
+
+  // Likewise how many Leitpunkte the level actually marks, which is not always how many
+  // the task prints: telc B2 prints four and asks for three, one of which may be an
+  // aspect of the candidate's own. Null where the level marks every point it prints.
+  const requiredPoints = rubric?.selfChosenAspects?.expectedTotal ?? null;
 
   // How often this user has attempted each task, and their best score on it.
   const attempts = await prisma.essay.findMany({
@@ -81,6 +87,7 @@ export async function GET(request: Request) {
   const enriched = prompts.map((prompt) => ({
     ...prompt,
     timeLimitMinutes: rubric?.timeLimitMinutes ?? null,
+    requiredPoints,
     practice: practiceByPrompt.get(prompt.id) ?? null,
   }));
 

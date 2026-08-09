@@ -1,7 +1,11 @@
 import { Check, Minus, X } from "lucide-react";
 import type { LeitpunktCoverage } from "@/lib/gemini";
+import { readCoverage, type CoverageTone } from "@/lib/coverageDisplay";
 
-const STATUS_STYLES = {
+const TONE_STYLES: Record<
+  CoverageTone,
+  { icon: typeof Check; label: string; iconClass: string; badgeClass: string }
+> = {
   ADDRESSED: {
     icon: Check,
     label: "Covered",
@@ -20,7 +24,18 @@ const STATUS_STYLES = {
     iconClass: "text-destructive",
     badgeClass: "bg-destructive/10 text-destructive",
   },
-} as const;
+  /**
+   * A point left alone after the requirement was already met — see readCoverage.
+   * Muted rather than red: skipping it is the task working as designed, and it costs
+   * nothing, so the row is there to inform, not to accuse.
+   */
+  NOT_NEEDED: {
+    icon: Minus,
+    label: "Not needed",
+    iconClass: "text-muted-foreground",
+    badgeClass: "bg-muted text-muted-foreground",
+  },
+};
 
 export function LeitpunktCoverageList({
   coverage,
@@ -28,7 +43,8 @@ export function LeitpunktCoverageList({
    * How many treated points the level actually asks for, where that is fewer than the
    * number printed. telc B2 wants three, and lets one of them be an aspect of the
    * candidate's own — so a correct letter can leave two printed Punkte untouched, and
-   * "2 of 5 fully covered" would report a pass as a failure.
+   * "2 of 5 fully covered" would report a pass as a failure. telc A2 prints four and
+   * marks three for the same reason.
    */
   expectedTotal,
 }: {
@@ -39,11 +55,7 @@ export function LeitpunktCoverageList({
     return null;
   }
 
-  const covered = coverage.filter((c) => c.status === "ADDRESSED").length;
-  const required = expectedTotal ?? coverage.length;
-  const ownCovered = coverage.filter(
-    (c) => c.selfChosen && c.status === "ADDRESSED",
-  ).length;
+  const { covered, required, ownCovered, tones } = readCoverage(coverage, expectedTotal);
 
   return (
     <div className="space-y-3">
@@ -59,7 +71,7 @@ export function LeitpunktCoverageList({
 
       <ul className="space-y-2">
         {coverage.map((item, i) => {
-          const style = STATUS_STYLES[item.status] ?? STATUS_STYLES.PARTIAL;
+          const style = TONE_STYLES[tones[i]] ?? TONE_STYLES.PARTIAL;
           const Icon = style.icon;
 
           return (
