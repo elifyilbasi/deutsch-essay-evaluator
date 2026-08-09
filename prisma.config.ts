@@ -10,6 +10,22 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    /*
+      What the CLI connects with — migrate, db push, db seed — which is not always what
+      the app connects with.
+
+      In production DATABASE_URL is Neon's pooled endpoint, and the pooler cannot run
+      migrations: it is PgBouncer in transaction mode, while Prisma Migrate needs a
+      session it can hold an advisory lock on. DIRECT_URL is the same database without
+      the pooler, and this is the only place that distinction has to be made.
+
+      Falling back rather than requiring it, because locally there is no pooler to
+      bypass: `prisma dev` hands out one direct connection and DATABASE_URL is already
+      it. An unset DIRECT_URL is the correct local state, not a missing one.
+
+      Prisma 7 has no `directUrl` datasource key — that was a schema attribute in 5 and
+      6 — so the choice is made here.
+    */
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });
