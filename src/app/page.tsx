@@ -41,7 +41,7 @@ export default async function Home() {
             <CardTitle className="text-base">Choose your exam</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            TELC A1–B1 supported today, with more levels and Goethe-Institut coming soon.
+            TELC A1–B2 supported today, with more levels and Goethe-Institut coming soon.
           </CardContent>
         </Card>
         <Card>
