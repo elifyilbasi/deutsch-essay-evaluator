@@ -44,11 +44,16 @@ function CorrectionMark({
 }) {
   const markRef = useRef<HTMLSpanElement>(null);
   const cardRef = useRef<HTMLSpanElement>(null);
-  const [offset, setOffset] = useState<{ left: number; top: number } | null>(null);
+  const [offset, setOffset] = useState<{
+    left: number;
+    top: number;
+    /** Reflected onto the card as data-placement, so the flip is assertable. */
+    placement: "above" | "below";
+  } | null>(null);
 
-  // Position the card under the mark, clamped to the paragraph so a correction near
-  // the right edge doesn't push the card off-screen. Measured after paint because it
-  // depends on the laid-out position of a mark that may wrap across lines.
+  // Position the card against the mark, clamped to the paragraph so a correction near an
+  // edge doesn't push the card out of view. Measured after paint because it depends on
+  // the laid-out position of a mark that may wrap across lines.
   useLayoutEffect(() => {
     if (!isOpen) return;
 
@@ -61,14 +66,31 @@ function CorrectionMark({
       const markBox = mark.getBoundingClientRect();
       const containerBox = container.getBoundingClientRect();
       const cardWidth = card.offsetWidth;
+      const cardHeight = card.offsetHeight;
 
       // Prefer left-aligned with the mark; pull back if it would overflow the right.
       const rawLeft = markBox.left - containerBox.left;
       const maxLeft = Math.max(0, container.clientWidth - cardWidth);
 
+      // Below the mark by default, above it when there is no room left below.
+      //
+      // The paragraph is the boundary because the Card wrapping it sets overflow-hidden,
+      // so anything reaching past the text is not merely awkward, it is cut off — which
+      // is what a correction on the closing line did: the mark opened a card that hung
+      // below the last line of the essay and lost its lower half, the corrected text
+      // among it. Flipping keeps the card inside the element it is measured against, so
+      // it does not depend on an ancestor choosing not to clip.
+      const below = markBox.bottom - containerBox.top + 6;
+      const fitsBelow = below + cardHeight <= container.clientHeight;
+      // Clamped at 0 rather than allowed to go negative: with a card taller than the
+      // text above the mark, overlapping the text is recoverable and disappearing off
+      // the top is not.
+      const above = Math.max(0, markBox.top - containerBox.top - cardHeight - 6);
+
       setOffset({
         left: Math.min(Math.max(0, rawLeft), maxLeft),
-        top: markBox.bottom - containerBox.top + 6,
+        top: fitsBelow ? below : above,
+        placement: fitsBelow ? "below" : "above",
       });
     };
 
@@ -120,6 +142,7 @@ function CorrectionMark({
           ref={cardRef}
           role="dialog"
           aria-label={`Correction detail: ${correction.original}`}
+          data-placement={offset?.placement}
           // `absolute` inside the relatively-positioned paragraph, so it scrolls with
           // the text rather than detaching the way a fixed-position layer would.
           className="absolute z-20 block w-72 max-w-[calc(100%-1rem)] rounded-lg bg-popover p-3 text-sm whitespace-normal shadow-md ring-1 ring-foreground/10"
