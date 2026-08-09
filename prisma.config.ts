@@ -10,6 +10,26 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
+    /*
+      One variable, always this one, so that what the CLI touches is never a question of
+      precedence between two.
+
+      That matters because the production database cannot be reached the same way twice.
+      Neon serves a pooled endpoint and a direct one, and the app must use the pooled host
+      while migrations must not: the pooler is PgBouncer in transaction mode, and Prisma
+      Migrate needs a session it can hold an advisory lock on. See README.
+
+      The obvious fix is a second variable the CLI prefers — and it was written that way
+      first. It is not worth it. A DIRECT_URL left in .env silently repoints every local
+      `db push` and `db seed` at production, so the cost of forgetting to remove it is
+      reshaping the live database while you believe you are working locally. Overriding
+      this one inline, for the one command that needs it, cannot be forgotten:
+
+        DATABASE_URL="<unpooled url>" npx prisma migrate deploy
+
+      Prisma 7 has no `directUrl` datasource key either — that was a schema attribute in
+      5 and 6 — so there is no third option that keeps both in the schema.
+    */
     url: process.env["DATABASE_URL"],
   },
 });

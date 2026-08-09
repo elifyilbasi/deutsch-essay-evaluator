@@ -68,7 +68,7 @@ covers only what is new.
 
    | Variable | Notes |
    | --- | --- |
-   | `DATABASE_URL` | The pooled string from step 1 |
+   | `DATABASE_URL` | The **pooled** string from step 1 — the host with `-pooler` in it |
    | `AUTH_SECRET` | `openssl rand -base64 32` — generate a fresh one, don't reuse the local value |
    | `AUTH_GOOGLE_ID` | Sign-in is Google-only, so this is not optional |
    | `AUTH_GOOGLE_SECRET` | ditto |
@@ -88,9 +88,22 @@ covers only what is new.
    Optional: `GEMINI_MODEL` (defaults to `gemini-flash-latest`) and `DAILY_EVAL_LIMIT`
    (defaults to `5`). See `.env.example` for the reasoning behind each.
 
-3. Run `npx prisma migrate deploy` against the production `DATABASE_URL` (locally, or as a
-   Vercel build step) before/at first deploy, then `npx prisma db seed` once to load the
-   prompt bank.
+3. Apply the schema and load the prompt bank, from your own machine, overriding
+   `DATABASE_URL` inline with the **unpooled** Neon string — the one whose host does *not*
+   contain `-pooler`. The pooled endpoint is PgBouncer in transaction mode and cannot run
+   migrations, so this is the one command in the project that must not use the URL the
+   deployed app uses:
+
+   ```bash
+   DATABASE_URL="postgres://…@ep-xxx.REGION.aws.neon.tech/neondb?sslmode=require" \
+     npx prisma migrate deploy && npx prisma db seed
+   ```
+
+   Inline, not exported and not added to `.env`. An unpooled production URL left sitting
+   in `.env` makes the next ordinary `npx prisma db push` reshape the live database.
+
+   `migrate deploy` applies `prisma/migrations`; `db seed` is safe to re-run, since it
+   withholds updates from any task that already has essays written against it.
 4. Deploy. Sign-in is Google-only: there is no sign-up step, since the first sign-in
    creates the account. Add the production callback URL
    (`https://<your-domain>/api/auth/callback/google`) to the OAuth client, alongside the
