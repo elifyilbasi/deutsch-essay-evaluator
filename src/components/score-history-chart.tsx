@@ -35,16 +35,31 @@ const GUTTER_W = "w-8";
 /** A zero still has to be visible without pretending to have height. */
 const ZERO_STUB = "h-[3px]";
 
+/**
+ * Day and month, named: "28 Jul".
+ *
+ * Not de-DE's all-numeric "28.7.", which is correct German — day and month are ordinals
+ * there, so each takes a period — but which fails on this axis for two reasons. Under a
+ * plot whose every other number is a percentage, a bare "28.7." does not announce itself
+ * as a date at all, and the trailing period that makes it German reads as a stray dot
+ * rather than as notation. A month name is unmistakable at a glance and needs no dot.
+ *
+ * English because the chrome is English; only scored data stays German. Day-first because
+ * that is the order these dates were already in, and the order the learner reads in.
+ */
 const shortDate = (d: Date) =>
-  d.toLocaleDateString("de-DE", { day: "numeric", month: "numeric" });
+  d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+/** The same, plus the year, for the ends of a span that needs one to be distinguishable. */
+const shortDateWithYear = (d: Date) =>
+  d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const longDate = (d: Date) =>
-  d.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
+  d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 const points = (n: number) => n.toLocaleString("de-DE", { maximumFractionDigits: 2 });
 
 /**
  * The two endpoint labels for the time axis.
  *
- * A whole history written in one sitting printed the same date at both ends ("4.8. 4.8."),
+ * A whole history written in one sitting printed the same date at both ends ("4 Aug 4 Aug"),
  * which reads as a rendering fault rather than as "all on one day" — so a single-day span
  * collapses to one centred label. And because the short form carries no year, two ends a
  * year apart would render identically for the opposite reason; those get the year back.
@@ -54,7 +69,7 @@ function dateAxis(first: Date, last: Date) {
     return { sameDay: true as const, first: shortDate(first), last: shortDate(last) };
   }
   const collides = shortDate(first) === shortDate(last);
-  const fmt = collides ? (d: Date) => d.toLocaleDateString("de-DE") : shortDate;
+  const fmt = collides ? shortDateWithYear : shortDate;
   return { sameDay: false as const, first: fmt(first), last: fmt(last) };
 }
 
@@ -190,14 +205,27 @@ export function ScoreHistoryChart({ level, attempts }: { level: Level; attempts:
                     } ${isZero ? ZERO_STUB : ""}`}
                     style={isZero ? undefined : { height: `${pct}%` }}
                   />
+                  {/*
+                    `z-10` lifts the label over the pass mark. That line is drawn after
+                    this list in the DOM so it can ride over the columns, and paint order
+                    for positioned siblings is DOM order — so without a z-index it rode
+                    over the digits too, dashing straight through any bar landing within
+                    about ten points below a gridline. The 60% line and a middling score
+                    is a common pairing, not an edge case.
+                  */}
                   {labelled.has(a.id) && (
                     <span
-                      className={`pointer-events-none absolute inset-x-0 text-center text-[10px] tabular-nums ${
+                      className={`pointer-events-none absolute inset-x-0 z-10 text-center text-[10px] tabular-nums ${
                         a.id === latest.id ? "font-medium text-foreground" : "text-muted-foreground"
                       }`}
                       style={{ bottom: `calc(${isZero ? 0 : pct}% + 5px)` }}
                     >
-                      {asPercent(a.ratio)}
+                      {/* The knock-out has to be an inline child, not this span: the span
+                          is `inset-x-0` and so only as wide as the 12px column, while the
+                          digits it centres are wider and overhang both edges. A background
+                          on the span would leave those overhanging glyphs still on the
+                          line. An inline box shrink-wraps the text it actually paints. */}
+                      <span className="rounded-xs bg-card px-1">{asPercent(a.ratio)}</span>
                     </span>
                   )}
                 </li>
@@ -225,8 +253,10 @@ export function ScoreHistoryChart({ level, attempts }: { level: Level; attempts:
 
             Pinned to the two ends of the bar row rather than centred inside the first and
             last columns: centred on a 12px column a date overflows its cell by more than
-            its own width, so on a two-column plot the pair collided into "4.7.5.7.".
-            Anchored to the edges they grow away from each other and cannot meet.
+            its own width, so on a two-column plot the pair collided into one run of
+            characters. Anchored to the edges they grow away from each other and cannot
+            meet — which is what lets the labels carry a month name at all, since a named
+            month is wider than the column it belongs to at every viewport.
           */}
           <div
             className={`mt-1.5 flex gap-2 text-[10px] whitespace-nowrap text-muted-foreground ${

@@ -6,7 +6,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/componen
 import { InstituteLevelBadge, ScoreBadge, StatusBadge } from "@/components/essay-badges";
 import { DeleteEssayButton } from "@/components/delete-essay-button";
 import { ProgressSummary } from "@/components/progress-summary";
-import { progressByLevel } from "@/lib/progress";
+import { asPercent, progressByLevel, ratioOf } from "@/lib/progress";
 
 /** Enough history to see a trend without an unbounded query as attempts pile up. */
 const RECENT_LIMIT = 50;
@@ -83,7 +83,23 @@ export default async function DashboardPage() {
                       maxScore={essay.evaluation.maxScore}
                     />
                   )}
-                  <DeleteEssayButton essayId={essay.id} />
+                  {/* The score is resolved here rather than in the button: this is where
+                      the evaluation and its own `maxScore` are, and `totalByLevel` counts
+                      the whole history — `progress` only covers the RECENT_LIMIT window,
+                      so reading it would claim "your only A2 essay" to someone whose
+                      others merely fell outside that window. */}
+                  <DeleteEssayButton
+                    essayId={essay.id}
+                    level={essay.level}
+                    scorePercent={
+                      essay.evaluation
+                        ? asPercent(
+                            ratioOf(essay.evaluation.overallScore, essay.evaluation.maxScore),
+                          )
+                        : null
+                    }
+                    isOnlyAttempt={totalByLevel[essay.level] === 1}
+                  />
                 </CardAction>
               </CardHeader>
               <Link href={`/essays/${essay.id}`}>

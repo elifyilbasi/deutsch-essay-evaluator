@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export function NavBar() {
   const { data: session, status } = useSession();
@@ -35,14 +34,12 @@ export function NavBar() {
               <span className="text-muted-foreground">
                 {session.user?.name || session.user?.email}
               </span>
-              <ThemeToggle />
               <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
                 Sign out
               </Button>
             </>
           ) : status === "loading" ? null : (
             <>
-              <ThemeToggle />
               {/* One button, not two: with Google there is no separate sign-up step —
                   the first sign-in creates the account. "Sign in" rather than "Log in"
                   for exactly that reason: "Log in" tells a first-time visitor they need

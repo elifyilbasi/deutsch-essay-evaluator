@@ -2,12 +2,25 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/*
+ * The app is light-only: there is no dark token set and nothing sets a `.dark` class.
+ *
+ * This line stays anyway, and must not be deleted as dead code. Tailwind's built-in
+ * `dark:` variant means `@media (prefers-color-scheme: dark)`; redefining it as a class
+ * selector that never matches is what keeps the 26 `dark:` utilities inside the vendored
+ * shadcn primitives switched off. Remove it and every one of them turns itself on for any
+ * visitor whose OS is set to dark, reaching for tokens that no longer exist — a half-dark
+ * app for exactly the people dropping dark mode was meant to spare.
+ *
+ * The alternative is stripping those 26 utilities out of components/ui/, which trades one
+ * line here for a permanent merge conflict against upstream shadcn.
+ */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -94,42 +107,6 @@
   --sidebar-accent-foreground: oklch(0.3 0.01 75);
   --sidebar-border: oklch(0.9 0.005 80);
   --sidebar-ring: oklch(0.45 0.075 245);
-}
-
-.dark {
-  --background: oklch(0.19 0.006 75);
-  --foreground: oklch(0.93 0.004 85);
-  --card: oklch(0.23 0.006 75);
-  --card-foreground: oklch(0.93 0.004 85);
-  --popover: oklch(0.23 0.006 75);
-  --popover-foreground: oklch(0.93 0.004 85);
-  --primary: oklch(0.72 0.09 240);
-  --primary-foreground: oklch(0.19 0.006 75);
-  --secondary: oklch(0.27 0.006 75);
-  --secondary-foreground: oklch(0.93 0.004 85);
-  --muted: oklch(0.27 0.006 75);
-  --muted-foreground: oklch(0.7 0.008 80);
-  --accent: oklch(0.3 0.008 75);
-  --accent-foreground: oklch(0.93 0.004 85);
-  --destructive: oklch(0.65 0.15 25);
-  --success: oklch(0.68 0.1 150);
-  --warning: oklch(0.75 0.11 78);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.09 240);
-  --chart-1: oklch(0.72 0.09 240);
-  --chart-2: oklch(0.68 0.1 150);
-  --chart-3: oklch(0.75 0.11 78);
-  --chart-4: oklch(0.65 0.15 25);
-  --chart-5: oklch(0.7 0.008 80);
-  --sidebar: oklch(0.23 0.006 75);
-  --sidebar-foreground: oklch(0.93 0.004 85);
-  --sidebar-primary: oklch(0.72 0.09 240);
-  --sidebar-primary-foreground: oklch(0.19 0.006 75);
-  --sidebar-accent: oklch(0.3 0.008 75);
-  --sidebar-accent-foreground: oklch(0.93 0.004 85);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.09 240);
 }
 
 @layer base {
