@@ -13,6 +13,7 @@ import {
   evaluateEssay,
   isOverloadedError,
   isQuotaError,
+  isTimeoutError,
   upstreamFailureMessage,
 } from "@/lib/gemini";
 
@@ -237,6 +238,22 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: upstreamFailureMessage(error), id: essay.id },
         { status: 503 },
+      );
+    }
+
+    // Not refunded, for the same reason as the generic case below: an abandoned call
+    // was still made, and still billed. What this branch buys is the answer itself —
+    // before this, the platform killed the function at 60s and none of this ran, so a
+    // slow evaluation returned a gateway error page that said nothing about the essay
+    // being safe or about the Evaluate button waiting on it.
+    if (isTimeoutError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "The evaluation is taking longer than usual. Your text has been saved — open it and press Evaluate to try scoring it again.",
+          id: essay.id,
+        },
+        { status: 504 },
       );
     }
 

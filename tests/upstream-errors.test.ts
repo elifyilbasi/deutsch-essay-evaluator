@@ -131,6 +131,44 @@ describe("retry while overloaded", () => {
     assert.equal(calls, 1, "repeating it would buy the same answer twice");
   });
 
+  it("declines a retry it has no time left to finish", async () => {
+    // The failure this exists for: three attempts at a busy model plus four seconds of
+    // backoff is what pushed a submission past the platform's 60s ceiling, where the
+    // function is killed and nothing gets to answer. A retry that cannot finish is not a
+    // second chance — it spends the last of the budget.
+    let calls = 0;
+    const { waited, wait } = recorder();
+    await assert.rejects(
+      retryWhileOverloaded(
+        async () => {
+          calls++;
+          throw apiError(503, "UNAVAILABLE");
+        },
+        // Already past the deadline, so the first failure is the last.
+        { wait, deadline: Date.now() - 1 },
+      ),
+      /UNAVAILABLE/,
+      "rethrows the model's own error, since nothing has actually timed out",
+    );
+    assert.equal(calls, 1, "must not start an attempt it cannot finish");
+    assert.deepEqual(waited, [], "and must not sleep towards it either");
+  });
+
+  it("still retries when the deadline leaves room", async () => {
+    let calls = 0;
+    const { wait } = recorder();
+    const result = await retryWhileOverloaded(
+      async () => {
+        calls++;
+        if (calls < 2) throw apiError(503, "UNAVAILABLE");
+        return "verdict";
+      },
+      { wait, deadline: Date.now() + 60_000 },
+    );
+    assert.equal(result, "verdict");
+    assert.equal(calls, 2, "a generous deadline must not suppress a viable retry");
+  });
+
   it("does not wait at all when the first attempt works", async () => {
     const { waited, wait } = recorder();
     assert.equal(await retryWhileOverloaded(async () => "ok", { wait }), "ok");
