@@ -16,38 +16,48 @@ type SeededTask = Omit<SeedPrompt, "sourceFile">;
  * Writing tasks in the authentic TELC "Schriftlicher Ausdruck" (Brief) format:
  * an intro line, an incoming letter to react to, and discrete Leitpunkte.
  *
- * The bulk of the B1 bank lives in ./seed-telc-b1.ts, transcribed from the practice
- * papers in exam-materials/telc/b1/. The entries below are the earlier hand-written
- * set: "Ritas Hochzeit" (also from a real paper) plus two originals that add a
- * formal-register (Sie) task, which the transcribed papers don't cover.
+ * The bulk of the B1 bank lives in ./seed-telc-b1.ts, modelled on the practice papers
+ * in exam-materials/telc/b1/. The entries below are the earlier hand-written set,
+ * kept because they add a formal-register (Sie) task that the B1 papers don't cover.
+ *
+ * Every stimulus letter here is ORIGINAL, on the same reasoning set out at length in
+ * ./seed-telc-b1.ts: written from a task's situation rather than from any paper's
+ * sentences, so every name, town, job and date is invented. "Sonjas Chorkonzert"
+ * replaced an earlier entry that reproduced a paper's letter verbatim — the format is
+ * free to reuse, the wording is not.
  *
  * A1 and A2 are transcribed papers throughout, in ./seed-telc-a1.ts and
- * ./seed-telc-a2.ts, so neither level appears below.
+ * ./seed-telc-a2.ts, so neither level appears below. See the Third-party content note
+ * in README.md.
  */
 const prompts: SeededTask[] = [
   // ---------------- B1 ----------------
   {
     institute: "TELC",
     level: "B1",
-    title: "Ritas Hochzeit",
+    title: "Sonjas Chorkonzert",
     schreibanlass: "ANTWORT",
     taskIntro: "Eine Bekannte hat Ihnen folgenden Brief geschrieben:",
-    stimulusAuthor: "Rita",
-    stimulusText: `Liebe(r) ...,
+    stimulusAuthor: "Sonja",
+    stimulusText: `Liebe(r) ........
 
-endlich habe ich Zeit, dir wieder mal zu schreiben. Schade, dass du bei unserer Hochzeit nicht dabei sein konntest! Wir waren mit Freunden und Verwandten über 50 Personen. Ich habe ein langes, weißes Kleid getragen, und Karl hat sich für diesen Tag einen teuren, schwarzen Anzug gekauft, obwohl er sonst immer nur Jeans trägt. Natürlich gab es ein wunderbares Festessen und danach wurde getanzt. Karl und ich haben viele Geschenke bekommen, vor allem auch Geld für unsere Hochzeitsreise. Wir wissen aber noch gar nicht, wohin wir fahren wollen.
+lange nichts von mir gehört, ich weiß. Seit September singe ich im Chor, und seitdem sehen meine Wochen anders aus.
 
-Wie läuft's eigentlich bei dir, du hast doch eine neue Stelle? Wie gefällt dir die Arbeit? Karl und ich würden uns sehr freuen, wenn du uns wieder mal besuchen würdest!
+Angefangen hat es zufällig: eine Nachbarin nahm mich einfach zur Probe mit. Inzwischen gehe ich jeden Dienstag hin, und ich merke, wie gut mir dieser Abend tut - zwei Stunden lang denke ich an gar nichts anderes. Nur meine Gitarre steht seit Monaten in der Ecke. Dafür fehlt mir die Zeit jetzt völlig.
 
-Liebe Grüße
-Rita`,
+Im Juni singen wir beim Stadtfest, draußen auf dem Marktplatz. Das ist unser erster großer Auftritt, und ich bin ziemlich aufgeregt.
+
+Hättest du Lust zu kommen? Ich würde dich danach gern wiedersehen.
+
+Herzliche Grüße
+Sonja`,
     instructions:
       "Antworten Sie Ihrer Bekannten. Schreiben Sie etwas zu den folgenden vier Punkten. Überlegen Sie sich vor dem Schreiben eine passende Reihenfolge der Punkte, eine passende Anrede, Einleitung und einen passenden Schluss.",
     leitpunkte: [
-      "Ihre neue Arbeitsstelle",
-      "Wie man in Ihrem Land heiratet",
-      "Vorschlag für Ritas Hochzeitsreise",
-      "Rita und Karl besuchen?",
+      "Ihr Rat, wie Sonja wieder zum Gitarrespielen kommt",
+      "Welche Musik Sie gern hören",
+      "Ein Fest in Ihrem Land, bei dem viel gesungen wird",
+      "Ob Sie zum Konzert kommen",
     ],
     register: "DU",
     requiresSubject: false,

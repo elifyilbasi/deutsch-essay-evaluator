@@ -51,7 +51,7 @@ const draft = (over: Partial<Draft> = {}): Draft => ({
   v: 1,
   userId: "user-a",
   promptId: "prompt-1",
-  content: "Liebe Rita,",
+  content: "Liebe Sonja,",
   elapsedSeconds: 42,
   updatedAt: NOW,
   ...over,

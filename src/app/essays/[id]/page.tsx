@@ -102,6 +102,28 @@ export default async function EssayDetailPage({
         </Card>
       )}
 
+      {/* A withdrawn task can have its stimulus cleared (scripts/redact-retired-stimulus.ts),
+          and without this the page contradicts itself: taskIntro above still announces
+          "folgenden Brief", and nothing follows it. Say what happened instead.
+
+          Gated on isActive, not on stimulusText alone. A1 and A2 tasks have no stimulus by
+          design — the candidate writes cold from the Leitpunkte — so testing only for a
+          missing letter would print a withdrawal notice on every A-level essay ever
+          written. Only a retired task that HAS lost its text lands here. */}
+      {!essay.prompt.stimulusText && !essay.prompt.isActive && (
+        <Card className={NOT_COPYABLE}>
+          <CardHeader>
+            <CardTitle className="text-base">The letter you replied to</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              This task has been withdrawn, and the letter it quoted is no longer
+              available. Your essay below, and the result it was given, are unchanged.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/*
         The same brief the writer saw. Without it, feedback like "Leitpunkt 3 is
         missing" names something that appears nowhere on the page — the coverage list
