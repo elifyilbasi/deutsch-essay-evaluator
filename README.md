@@ -54,67 +54,6 @@ same treatment as this one — push it locally, and add a migration for producti
 command above, using `--from-migrations prisma/migrations` as the `--from` so the diff
 covers only what is new.
 
-## Deploying to Vercel
-
-1. Provision a Postgres database — Neon integrates natively with Vercel and has a free tier
-   (Vercel dashboard → Storage → create a Postgres database). Use the **pooled** connection
-   string (Neon's `-pooler` host) for `DATABASE_URL`. Every function instance opens its own
-   pool, so what the database sees is instances × the pool size in `src/lib/prisma.ts`; the
-   shared pooler is what keeps that from exhausting the connection limit under any real load.
-
-2. Set these environment variables in the Vercel project.
-
-   Required — the app will not start, or not let anyone in, without all five:
-
-   | Variable | Notes |
-   | --- | --- |
-   | `DATABASE_URL` | The **pooled** string from step 1 — the host with `-pooler` in it |
-   | `AUTH_SECRET` | `openssl rand -base64 32` — generate a fresh one, don't reuse the local value |
-   | `AUTH_GOOGLE_ID` | Sign-in is Google-only, so this is not optional |
-   | `AUTH_GOOGLE_SECRET` | ditto |
-   | `GEMINI_API_KEY` | The shared key everything is rationed against |
-
-   Rationing — every one of these means *no limit* when unset, so production is uncapped
-   until they are set. `GLOBAL_DAILY_EVAL_LIMIT` is the one that actually protects the
-   shared key: without it a single user can spend the whole day's free-tier allowance:
-
-   | Variable | Unset means | Suggested |
-   | --- | --- | --- |
-   | `GLOBAL_DAILY_EVAL_LIMIT` | no ceiling across all users | `10` (see `.env.example`) |
-   | `GEMINI_RPM_LIMIT` | no per-minute gate | match your model's RPM quota |
-   | `NEW_ACCOUNT_DAILY_LIMIT` | new accounts unrestricted | a small shared pool |
-   | `FIRST_DAY_EVAL_LIMIT` | new accounts get the ordinary quota | below `DAILY_EVAL_LIMIT` |
-
-   Optional: `GEMINI_MODEL` (defaults to `gemini-flash-latest`) and `DAILY_EVAL_LIMIT`
-   (defaults to `5`). See `.env.example` for the reasoning behind each.
-
-3. Apply the schema and load the prompt bank, from your own machine, overriding
-   `DATABASE_URL` inline with the **unpooled** Neon string — the one whose host does *not*
-   contain `-pooler`. The pooled endpoint is PgBouncer in transaction mode and cannot run
-   migrations, so this is the one command in the project that must not use the URL the
-   deployed app uses:
-
-   ```bash
-   DATABASE_URL="postgres://…@ep-xxx.REGION.aws.neon.tech/neondb?sslmode=require" \
-     npx prisma migrate deploy && npx prisma db seed
-   ```
-
-   Inline, not exported and not added to `.env`. An unpooled production URL left sitting
-   in `.env` makes the next ordinary `npx prisma db push` reshape the live database.
-
-   `migrate deploy` applies `prisma/migrations`; `db seed` is safe to re-run, since it
-   withholds updates from any task that already has essays written against it.
-4. Deploy. Sign-in is Google-only: there is no sign-up step, since the first sign-in
-   creates the account. Add the production callback URL
-   (`https://<your-domain>/api/auth/callback/google`) to the OAuth client, alongside the
-   localhost one.
-
-## Gemini free tier
-
-Get a key at https://aistudio.google.com/apikey and set `GEMINI_API_KEY`. All users share this
-one key; `DAILY_EVAL_LIMIT` (default 5) caps how many evaluations a single user can run per UTC
-day so no one user can exhaust the shared free-tier quota.
-
 ## Adding a new level or institute
 
 Rubrics and prompts are data, not code paths:
@@ -126,34 +65,6 @@ Rubrics and prompts are data, not code paths:
    arrays).
 
 No changes to the evaluation pipeline, API routes, or database schema are needed.
-
-## Third-party content
-
-The MIT licence below covers this project's own code. It cannot and does not extend to
-telc's exam material, which belongs to telc gGmbH. This project is not affiliated with or
-endorsed by telc.
-
-What that means in practice, stated plainly rather than left to be discovered:
-
-- **Exam papers are never committed.** `exam-materials/` is gitignored for PDFs and images
-  alike, and nothing in it is deployed. It is a local reference folder — see
-  [exam-materials/README.md](exam-materials/README.md).
-- **Writing tasks: B1 and B2 are original.** Every stimulus letter and advertisement in
-  `prisma/seed.ts`, `prisma/seed-telc-b1.ts` and `prisma/seed-telc-b2.ts` was written from
-  a task's *situation* rather than from a paper's sentences. Names, towns, firms, prices
-  and dates are invented. What they reuse is format, which is not expression.
-- **Writing tasks: A1 and A2 are transcribed.** The 18 tasks in `prisma/seed-telc-a1.ts`
-  and `prisma/seed-telc-a2.ts` keep their papers' titles, Situierungen and Punkte
-  verbatim. Each is short — a title, a one-line situation and three or four bullets — but
-  it is the papers' wording, and the file headers say so per task.
-- **Rubrics quote the published assessment criteria.** `src/lib/rubrics/telc.ts` holds the
-  band descriptors from telc's *Bewertungskriterien*, cited to the specific paper and
-  edition at the top of that file. They are short functional phrases that the scoring
-  cannot work without; the surrounding grids and guidance are this project's own.
-- **The instruction blocks are the papers'.** They are identical boilerplate across every
-  paper of a level and functional rather than creative, so they are reused as-is.
-
-If you represent telc and want any of the above changed, please open an issue.
 
 ## Licence
 
