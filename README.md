@@ -1,12 +1,43 @@
 # Deutsch Essay Evaluator
 
-Web app for German learners to write TELC/Goethe exam-style essays and get AI feedback
-(grammar corrections, per-criterion scoring, and a summary) via Google Gemini.
+Practise TELC German writing exams and get examiner-style feedback in seconds.
 
-**Scope**: TELC only, all four levels — A1, A2, B1 and B2 are seeded and selectable, 79 tasks
+**[Try it live →](https://deutsch-essay-evaluator.vercel.app)**
+
+![Choosing a TELC B1 writing task: the exam picker above, and a filterable list of tasks
+below, each showing its Anlass, word range and register](public/screenshot-write.png)
+
+Pick an exam level, write against a real exam-format task under the clock, and get back
+inline grammar corrections, a per-criterion score using telc's own band descriptors, and a
+short summary of what to fix. Sign in with Google — there is no sign-up step and no
+password anywhere.
+
+**Scope**: TELC, all four levels — A1, A2, B1 and B2 are seeded and selectable, 79 tasks
 between them. The Goethe-Institut is stubbed in the UI ("Coming soon") and supported by the
 data model, but has no rubric and no seeded tasks — see [src/lib/rubrics](src/lib/rubrics) for
 how to add an institute.
+
+## Things worth a look
+
+- **Rubrics are data, not code paths** — [src/lib/rubrics](src/lib/rubrics). The levels
+  differ structurally, not just numerically: A1 marks each Inhaltspunkt on its own (3 / 1,5
+  / 0, max 10, no grammar criterion at all), while B1 grades three criteria in A/B/C/D bands
+  worth 5/3/1/0 and multiplies by three. Adding a level or an institute touches no API
+  route, no evaluation pipeline and no schema.
+- **Rationing one shared free-tier API key** — [src/lib/rateLimit.ts](src/lib/rateLimit.ts).
+  A per-user daily quota, a global daily ceiling, a per-minute burst gate, and tighter
+  limits for accounts under 24 hours old. Claims are reserved through a row lock and an
+  advisory lock, so simultaneous submissions cannot overshoot the ceiling —
+  [scripts/check-reservation-concurrency.ts](scripts/check-reservation-concurrency.ts) fires
+  real concurrent requests to prove it.
+- **Timeouts that answer instead of failing** — [src/lib/gemini.ts](src/lib/gemini.ts). The
+  evaluation runs on its own 50s budget beneath the platform's 60s limit, enforced by both
+  an `AbortSignal` and a retry deadline. A slow model returns a real message naming the
+  saved essay, rather than the bare gateway error the platform would produce by killing the
+  function mid-request.
+- **The examiner prompt is snapshot-tested** — [tests/snapshots](tests/snapshots). Every
+  rubric change shows up as a readable diff of what the model is actually told, which is
+  the part most likely to drift silently.
 
 ## Stack
 
