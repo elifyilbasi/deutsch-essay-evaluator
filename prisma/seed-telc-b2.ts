@@ -2,12 +2,15 @@
  * TELC B2 "Schriftlicher Ausdruck" tasks, modelled on the practice papers in
  * exam-materials/telc/b2/ (telc-uebungstest-01..33.png and 34..37.pdf).
  *
- * UNLIKE the A1, A2 and B1 banks, the stimulus texts here are ORIGINAL. Those levels
- * quote a short personal letter; a B2 task reprints a full commercial advertisement —
- * company, address, contact details and ad copy — and dozens of those transcribed into a
- * database that gets deployed is precisely what exam-materials/README.md warns against.
- * So every firm, product, price and address below is invented. The format is the
- * papers': same Anzeige-then-Aufgabe shape, same register, same Leitpunkt style.
+ * As in the B1 bank, the stimulus texts here are ORIGINAL — and there was more to
+ * invent: a B2 task reprints a full commercial advertisement, company, address, contact
+ * details and ad copy, and dozens of those transcribed into a database that gets deployed
+ * is precisely what exam-materials/README.md warns against. So every firm, product, price
+ * and address below is invented. The format is the papers': same Anzeige-then-Aufgabe
+ * shape, same register, same Leitpunkt style.
+ *
+ * A1 and A2 are the exception at this point, not B1: those two banks are transcribed,
+ * which the Third-party content note in README.md states outright.
  *
  * `sourceFile` therefore records the paper each task's SHAPE follows, not a paper it was
  * copied from. Kept so the bank can be checked against the real spread of task types.

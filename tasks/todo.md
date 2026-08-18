@@ -16,23 +16,22 @@ telc A1 *Schreiben Teil 1* (Formular ausfüllen) is deliberately out of scope; o
 
 ## The official grid
 
-From the telc **Start Deutsch 1 Übungstest 1**, *Informationen für Prüfende →
-Bewertung*: the marks two Prüfende enter on the green Antwortbogen S60 as "1-2-3-KG".
-"Es können maximal 10 Punkte vergeben werden."
+Source: telc **Start Deutsch 1 Übungstest 1**, *Informationen für Prüfende → Bewertung* —
+the marks two Prüfende enter on the green Antwortbogen S60 as "1-2-3-KG". Summarised
+rather than reproduced here; the grid itself stays in the paper, and the band descriptors
+the scoring actually needs live in `src/lib/rubrics/telc.ts`.
 
-| Erfüllung der Aufgabenstellung (pro Inhaltspunkt) | |
-|---|---|
-| 3 | Aufgabe voll erfüllt und verständlich |
-| 1,5 | Aufgabe wegen sprachlicher und inhaltlicher Mängel nur teilweise erfüllt |
-| 0 | Aufgabe nicht erfüllt und/oder unverständlich |
+Two criteria, ten points:
 
-| Kommunikative Gestaltung des Texts | |
-|---|---|
-| 1 | der Textsorte angemessen |
-| 0,5 | untypische oder fehlende Wendungen, z. B. keine Anrede |
-| 0 | keine textsortenspezifischen Wendungen |
+- **Erfüllung der Aufgabenstellung**, marked *per Inhaltspunkt* on a three-value scale —
+  full marks (3) for a point handled fully and comprehensibly, half (1,5) where linguistic
+  or content problems leave it only partly handled, nothing (0) where it is unhandled or
+  incomprehensible.
+- **Kommunikative Gestaltung des Texts**, one mark for the whole text on the same
+  three-value shape — 1, 0,5 or 0, turning on whether the text carries the conventions of
+  its Textsorte at all, the Anrede being the example the paper gives.
 
-Three Inhaltspunkte × 3, plus 1 for KG = 10.
+Three Inhaltspunkte × 3, plus 1 for KG = 10, which is the stated maximum.
 
 ## What the grid does NOT contain
 

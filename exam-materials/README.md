@@ -71,15 +71,21 @@ Leitpunkt style, different content.
 
 For a TELC B1 *Schriftlicher Ausdruck* (Brief) task, the structure is:
 
-| Part | Example from a TELC B1 paper | Maps to `Prompt` field |
+| Part | What to take from it | Maps to `Prompt` field |
 |---|---|---|
-| Task intro | "Eine Bekannte hat Ihnen folgenden Brief geschrieben:" | `taskIntro` |
-| Stimulus letter | The full incoming letter | `stimulusText` |
-| Writer's name | "Rita" — needed so the reply can open "Liebe Rita" | `stimulusAuthor` |
-| Instruction line | "Antworten Sie … Schreiben Sie etwas zu den folgenden vier Punkten:" | `instructions` |
-| The four points | "Ihre neue Arbeitsstelle", "Wie man in Ihrem Land heiratet", … | `leitpunkte[]` |
+| Task intro | The one-line lead-in announcing the letter | `taskIntro` |
+| Stimulus letter | The situation it sets up — never its sentences | `stimulusText` |
+| Writer's name | Who signs it, so the reply can open "Liebe(r) …" | `stimulusAuthor` |
+| Instruction line | The standard instruction block, identical on every paper | `instructions` |
+| The four points | How many, and what kind of thing each one asks for | `leitpunkte[]` |
 | Register | Informal (`du`) vs formal (`Sie`) | `register` |
 | Subject line required? | Whether a *Betreff* is asked for | `requiresSubject` |
+
+Note what the middle column does and does not say. The **shape** of each slot is what
+gets extracted; the paper's own wording is not, except for the instruction block, which
+is identical boilerplate on every paper and functional rather than creative. A worked
+example of the result is "Sonjas Chorkonzert" in `prisma/seed.ts` — B1 format throughout,
+every word invented.
 
 The four **Leitpunkte** are stored as a list rather than prose because TELC grades
 *Inhaltliche Vollständigkeit* by checking each point individually — the evaluator needs
