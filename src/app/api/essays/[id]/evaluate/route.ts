@@ -7,6 +7,7 @@ import {
   evaluateEssay,
   isOverloadedError,
   isQuotaError,
+  isTimeoutError,
   upstreamFailureMessage,
 } from "@/lib/gemini";
 
@@ -112,6 +113,19 @@ export async function POST(
       return NextResponse.json(
         { error: upstreamFailureMessage(error), id: essay.id },
         { status: isQuotaError(error) ? 429 : 503 },
+      );
+    }
+
+    // Abandoned at our own deadline rather than killed at the platform's, so there is a
+    // response to give at all. Not refunded: the call was made and billed even though we
+    // stopped waiting for it.
+    if (isTimeoutError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "The evaluation is taking longer than usual and was stopped. Your text is safe — you can try again.",
+        },
+        { status: 504 },
       );
     }
 

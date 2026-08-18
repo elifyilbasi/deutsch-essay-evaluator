@@ -487,7 +487,8 @@ const MAX_ATTEMPTS = 3;
  */
 const RETRY_DELAYS_MS = [1000, 3000];
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Runs `call`, trying again only while the model is too busy to take it.
@@ -498,16 +499,73 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  */
 export async function retryWhileOverloaded<T>(
   call: () => Promise<T>,
-  { attempts = MAX_ATTEMPTS, delays = RETRY_DELAYS_MS, wait = sleep } = {},
+  {
+    attempts = MAX_ATTEMPTS,
+    delays = RETRY_DELAYS_MS,
+    wait = sleep,
+    /**
+     * A timestamp past which no further attempt may be *started*.
+     *
+     * Without it the retries were the surest way to run out of time: three attempts at
+     * a busy model, plus four seconds of backoff, is what turned one slow submission
+     * into a platform timeout that discarded a perfectly good response. A retry that
+     * cannot finish is not a second chance, it is the thing that spends the last of
+     * the budget.
+     *
+     * The estimate is the previous attempt's own duration, because nothing else here
+     * knows how long this model takes on this essay. Optional, so a caller with no
+     * clock — the tests, and anything not on a serverless function — behaves exactly
+     * as before.
+     */
+    deadline,
+  }: {
+    attempts?: number;
+    delays?: number[];
+    wait?: (ms: number) => Promise<void>;
+    deadline?: number;
+  } = {},
 ): Promise<T> {
   for (let attempt = 1; ; attempt++) {
+    const startedAt = Date.now();
     try {
       return await call();
     } catch (error) {
       if (attempt >= attempts || !isOverloadedError(error)) throw error;
-      await wait(delays[attempt - 1] ?? delays.at(-1) ?? 0);
+
+      const delay = delays[attempt - 1] ?? delays.at(-1) ?? 0;
+      if (deadline !== undefined) {
+        const likelyNeeded = delay + (Date.now() - startedAt);
+        // Rethrow the model's own error rather than a timeout: nothing has timed out
+        // yet, we are simply declining to start something that would.
+        if (Date.now() + likelyNeeded > deadline) throw error;
+      }
+
+      await wait(delay);
     }
   }
+}
+
+/**
+ * How long one evaluation may run before we stop waiting on it.
+ *
+ * Under the 60s ceiling both routes declare, and by enough to write the essay's row and
+ * serialise a response afterwards. The gap is the whole point: past 60s the platform
+ * kills the function mid-await, so none of the careful failure handling in those routes
+ * runs, and the learner is handed a plain HTML gateway error that neither says their
+ * text was saved nor how to score it. Stopping first turns that into an answer.
+ */
+export const EVALUATION_BUDGET_MS = 50_000;
+
+/** Thrown when an evaluation is abandoned at EVALUATION_BUDGET_MS. */
+export class EvaluationTimedOut extends Error {
+  constructor() {
+    super("The evaluation did not finish in time.");
+    this.name = "EvaluationTimedOut";
+  }
+}
+
+export function isTimeoutError(error: unknown): boolean {
+  return error instanceof EvaluationTimedOut;
 }
 
 export function isQuotaError(error: unknown): boolean {
@@ -608,7 +666,10 @@ export function upstreamFailureMessage(error: unknown): string {
   return `The evaluation service is busy right now. ${saved} — please open the essay and retry in a minute.`;
 }
 
-export async function evaluateEssay(task: TaskContext): Promise<{
+export async function evaluateEssay(
+  task: TaskContext,
+  { budgetMs = EVALUATION_BUDGET_MS }: { budgetMs?: number } = {},
+): Promise<{
   result: EvaluationResult;
   verdict: ExaminerVerdict;
   raw: { model: string; text: string };
@@ -649,9 +710,38 @@ export async function evaluateEssay(task: TaskContext): Promise<{
     unparseable JSON is a fault in the request or the schema, and repeating it identically
     would just pay for the same answer twice.
   */
-  const response = await retryWhileOverloaded(() =>
-    ai.models.generateContent(request),
-  );
+  /*
+    The budget is enforced twice over, and both halves are needed. The signal stops a
+    single call that has hung; the deadline stops a *retry* being started that could not
+    finish. Neither covers the other: three prompt failures inside the budget still need
+    the deadline to stop a fourth, and one call that never returns needs the signal.
+
+    Aborting does not un-bill the request — the SDK says so in as many words — so a
+    submission abandoned here has still cost the shared key, and the routes deliberately
+    do not refund the reservation for it.
+  */
+  const deadline = Date.now() + budgetMs;
+  const controller = new AbortController();
+  const abandon = setTimeout(() => controller.abort(), budgetMs);
+
+  let response;
+  try {
+    response = await retryWhileOverloaded(
+      () =>
+        ai.models.generateContent({
+          ...request,
+          config: { ...request.config, abortSignal: controller.signal },
+        }),
+      { deadline },
+    );
+  } catch (error) {
+    // Reported as our own timeout rather than whatever shape the SDK gives an aborted
+    // fetch, so the routes can tell "we gave up waiting" from "the model said no".
+    if (controller.signal.aborted) throw new EvaluationTimedOut();
+    throw error;
+  } finally {
+    clearTimeout(abandon);
+  }
 
   const text = response.text;
   if (!text) {
