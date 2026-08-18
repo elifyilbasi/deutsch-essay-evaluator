@@ -24,6 +24,20 @@
  *
  * Titles are ours — the originals are all just "Schriftlicher Ausdruck".
  *
+ * Five of them changed once the letters above were rewritten, and the rename was not
+ * cosmetic. seed.ts withholds an update from any task that already has essays against
+ * it, so these five kept serving their old transcribed letters from the database however
+ * often the files were re-seeded — the seed reported success and nothing moved. A new
+ * title makes each one a create instead, and prune() retires the old row with its essays
+ * intact. The titles also simply became wrong: Petra's holiday house is now her aunt's
+ * Bauernhaus, and Thomas' outing turns on a broken ankle rather than the boat.
+ *
+ * Retiring a row does not blank it. `src/app/essays/[id]/page.tsx` renders
+ * `prompt.stimulusText` whatever `isActive` says, so a retired row keeps showing its
+ * letter on every past essay page; the stimulus has to be cleared separately. The page
+ * guards on `stimulusText &&`, so a null degrades to no letter block rather than an
+ * empty frame.
+ *
  * Every task here is B1, informal (du), four Leitpunkte, 80-100 words, 30 minutes.
  *
  * `requiresSubject` is false throughout, even though most of these papers tell the
@@ -105,7 +119,7 @@ Andreas`,
   },
   {
     ...base,
-    title: "Ferienhaus im Schwarzwald",
+    title: "Petras Bauernhaus im Schwarzwald",
     taskIntro: "Eine Bekannte hat Ihnen folgenden Brief geschrieben:",
     stimulusAuthor: "Petra",
     stimulusText: `Liebe(r) ........
@@ -159,7 +173,7 @@ Sophie`,
   },
   {
     ...base,
-    title: "Veras Weg zur Arbeit",
+    title: "Veras neuer Arbeitsweg",
     taskIntro: "Eine Freundin hat Ihnen den folgenden Brief geschrieben:",
     stimulusAuthor: "Vera",
     stimulusText: `Liebe(r) ........
@@ -300,7 +314,7 @@ Deine Tamara`,
   },
   {
     ...base,
-    title: "Thomas' Ausflug mit Bus und Schiff",
+    title: "Thomas' Ausflug trotz Verletzung",
     taskIntro: "Sie haben von Ihrem Freund folgende E-Mail erhalten:",
     stimulusAuthor: "Thomas",
     stimulusText: `Liebe(r) ........
@@ -355,7 +369,7 @@ Jan`,
   },
   {
     ...base,
-    title: "Janines Hochzeit im Oktober",
+    title: "Janine heiratet im Oktober",
     taskIntro: "Sie haben folgenden Brief von einer Freundin erhalten:",
     stimulusAuthor: "Jennifer",
     stimulusText: `Liebe(r) ........
@@ -490,7 +504,7 @@ Nicole`,
   },
   {
     ...base,
-    title: "Maras Autoreise mit ihrem neuen Freund",
+    title: "Maras Autoreise mit Simon",
     taskIntro: "Eine Freundin hat Ihnen den folgenden Brief geschrieben:",
     stimulusAuthor: "Mara",
     stimulusText: `Liebe(r) ........
