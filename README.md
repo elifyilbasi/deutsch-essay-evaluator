@@ -66,6 +66,34 @@ Rubrics and prompts are data, not code paths:
 
 No changes to the evaluation pipeline, API routes, or database schema are needed.
 
+## Third-party content
+
+The MIT licence below covers this project's own code. It cannot and does not extend to
+telc's exam material, which belongs to telc gGmbH. This project is not affiliated with or
+endorsed by telc.
+
+What that means in practice, stated plainly rather than left to be discovered:
+
+- **Exam papers are never committed.** `exam-materials/` is gitignored for PDFs and images
+  alike, and nothing in it is deployed. It is a local reference folder — see
+  [exam-materials/README.md](exam-materials/README.md).
+- **Writing tasks: B1 and B2 are original.** Every stimulus letter and advertisement in
+  `prisma/seed.ts`, `prisma/seed-telc-b1.ts` and `prisma/seed-telc-b2.ts` was written from
+  a task's *situation* rather than from a paper's sentences. Names, towns, firms, prices
+  and dates are invented. What they reuse is format, which is not expression.
+- **Writing tasks: A1 and A2 are transcribed.** The 18 tasks in `prisma/seed-telc-a1.ts`
+  and `prisma/seed-telc-a2.ts` keep their papers' titles, Situierungen and Punkte
+  verbatim. Each is short — a title, a one-line situation and three or four bullets — but
+  it is the papers' wording, and the file headers say so per task.
+- **Rubrics quote the published assessment criteria.** `src/lib/rubrics/telc.ts` holds the
+  band descriptors from telc's *Bewertungskriterien*, cited to the specific paper and
+  edition at the top of that file. They are short functional phrases that the scoring
+  cannot work without; the surrounding grids and guidance are this project's own.
+- **The instruction blocks are the papers'.** They are identical boilerplate across every
+  paper of a level and functional rather than creative, so they are reused as-is.
+
+If you represent telc and want any of the above changed, please open an issue.
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
